@@ -22,8 +22,8 @@ class File extends Model
      * @var array
      */
     protected $casts = [
-    	'uploaded_by' => 'integer',
-    	'size' => 'integer',
+        'uploaded_by' => 'integer',
+        'size' => 'integer',
     ];
 
     /**
@@ -35,4 +35,50 @@ class File extends Model
         'uploaded_by', 'original_filename', 'filename', 'extension',
         'mime_type', 'path', 'size', 'bucket', 'url',
     ];
+
+    /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array
+     */
+    protected $appends = ['size_readable'];
+
+    /**
+     * Get the size in a readable format.
+     *
+     * @return string   
+     */
+    public function getSizeReadableAttribute()
+    {
+        $decimals = '2';
+
+        $size = array('B','KB','MB','GB','TB','PB','EB','ZB','YB');
+
+        $factor = floor((strlen($this->size) - 1) / 3);
+
+        $sizeReadable = sprintf("%.2f", $this->size / pow(1024, $factor));
+        $sizeReadable .= ' ' . @$size[$factor];
+
+        return $sizeReadable;
+    }
+
+    /**
+     * Ignore flagged signatures.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param string $bucket
+     * @param \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeFromBucket($query, $bucket)
+    {
+        return $query->where('bucket', $bucket);
+    }
+
+    /**
+     * Get the user who uploaded the file.
+     */
+    public function uploaded_by()
+    {
+        return $this->belongsTo(User::class, 'uploaded_by');
+    }
 }

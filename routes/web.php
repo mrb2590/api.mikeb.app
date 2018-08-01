@@ -17,7 +17,7 @@ Route::get('/', 'HomeController@index')->name('index');
 
 
 // Routes require authentication
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth'])->group(function() {
 
 	Route::get('/home', 'HomeController@home')->name('home');
 

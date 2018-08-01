@@ -16,7 +16,10 @@ class FilesController extends Controller
      */
     public function __construct()
     {
-        //
+        // ini_set('upload_max_filesize', '20000M');
+        // ini_set('post_max_size', '20000M');
+        // ini_set('max_execution_time', '3600');
+        // ini_set('max_input_time', '3600');
     }
 
     /**
@@ -35,9 +38,37 @@ class FilesController extends Controller
     }
 
     /**
-     * Return a single user.
+     * Fetch files.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param  \Illuminate\Http\Request $request
+     * @param  \App\file $file
+     * @return \Illuminate\Http\Response
+     */
+    public function fetch(Request $request, File $file = null)
+    {
+    	if ($file) {
+    		return $file->load('uploaded_by');
+    	}
+
+    	return File::paginate(20)->load('uploaded_by');
+    }
+
+    /**
+     * Fetch files.
+     *
+     * @param  \Illuminate\Http\Request $request
+     * @param  string $bucket
+     * @return \Illuminate\Http\Response
+     */
+    public function fetchBucket(Request $request, $bucket)
+    {
+    	return File::fromBucket($bucket)->paginate(20)->load('uploaded_by');
+    }
+
+    /**
+     * Store a file upload.
+     *
+     * @param  \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)

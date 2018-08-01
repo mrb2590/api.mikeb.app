@@ -24,6 +24,6 @@ class UsersController extends Controller
      */
     public function fetch(Request $request)
     {
-        return $request->user();
+        return $request->user()->load('files');
     }
 }
