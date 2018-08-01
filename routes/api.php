@@ -13,6 +13,11 @@ use Illuminate\Http\Request;
 |
 */
 
-Route::middleware('auth:api')->get('/user', function (Request $request) {
-    return $request->user();
+// Routes require authentication
+Route::middleware(['auth:api'])->prefix('v1')->group(function () {
+
+	Route::get('/user', 'UsersController@fetch')->name('fetch-user');
+
+	Route::post('/files', 'FilesController@store')->name('store-file');
+
 });
