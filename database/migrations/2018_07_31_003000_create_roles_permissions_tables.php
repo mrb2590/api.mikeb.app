@@ -82,6 +82,14 @@ class CreateRolesPermissionsTables extends Migration
         ]);
 
         // Create permissions
+        $manageAPIClientsPermissionId = DB::table('permissions')->insertGetId([
+            'name' => 'manage_api_clients',
+            'display_name' => 'Manage API Clients',
+            'description' => 'Create/update/delete clients to consume the API.',
+            'created_at' => \Carbon\Carbon::now()->toDateTimeString(),
+            'updated_at' => \Carbon\Carbon::now()->toDateTimeString()
+        ]);
+
         $fetchAllUsersPermissionId = DB::table('permissions')->insertGetId([
             'name' => 'fetch_users',
             'display_name' => 'Fetch Users',
@@ -142,6 +150,10 @@ class CreateRolesPermissionsTables extends Migration
         
         // Super User Permissions
         DB::table('permission_role')->insert([
+            'permission_id' => $manageAPIClientsPermissionId,
+            'role_id' => $superRoleId
+        ]);
+        DB::table('permission_role')->insert([
             'permission_id' => $fetchAllUsersPermissionId,
             'role_id' => $superRoleId
         ]);
@@ -154,7 +166,11 @@ class CreateRolesPermissionsTables extends Migration
             'role_id' => $superRoleId
         ]);
         DB::table('permission_role')->insert([
-            'permission_id' => $uploadFilesPermissionId,
+            'permission_id' => $fetchFilesPermissionId,
+            'role_id' => $superRoleId
+        ]);
+        DB::table('permission_role')->insert([
+            'permission_id' => $storeFilesPermissionId,
             'role_id' => $superRoleId
         ]);
         DB::table('permission_role')->insert([
@@ -176,7 +192,11 @@ class CreateRolesPermissionsTables extends Migration
             'role_id' => $adminRoleId
         ]);
         DB::table('permission_role')->insert([
-            'permission_id' => $uploadFilesPermissionId,
+            'permission_id' => $fetchFilesPermissionId,
+            'role_id' => $adminRoleId
+        ]);
+        DB::table('permission_role')->insert([
+            'permission_id' => $storeFilesPermissionId,
             'role_id' => $adminRoleId
         ]);
         DB::table('permission_role')->insert([
@@ -190,7 +210,11 @@ class CreateRolesPermissionsTables extends Migration
         
         // Member Permissions
         DB::table('permission_role')->insert([
-            'permission_id' => $uploadFilesPermissionId,
+            'permission_id' => $fetchFilesPermissionId,
+            'role_id' => $memberRoleId
+        ]);
+        DB::table('permission_role')->insert([
+            'permission_id' => $storeFilesPermissionId,
             'role_id' => $memberRoleId
         ]);
         DB::table('permission_role')->insert([
@@ -203,6 +227,10 @@ class CreateRolesPermissionsTables extends Migration
         ]);
         
         // Viewer Permissions
+        DB::table('permission_role')->insert([
+            'permission_id' => $fetchFilesPermissionId,
+            'role_id' => $viewerRoleId
+        ]);
         DB::table('permission_role')->insert([
             'permission_id' => $shareFilesPermissionId,
             'role_id' => $viewerRoleId
