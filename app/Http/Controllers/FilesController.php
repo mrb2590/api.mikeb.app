@@ -46,6 +46,10 @@ class FilesController extends Controller
      */
     public function fetch(Request $request, File $file = null)
     {
+        if (!$request->user()->can('fetch_files')) {
+            abort(403, 'Unauthorized.');
+        }
+
     	if ($file) {
     		return $file->load('uploaded_by');
     	}
@@ -64,6 +68,10 @@ class FilesController extends Controller
      */
     public function fetchDisk(Request $request, $disk)
     {
+        if (!$request->user()->can('fetch_files')) {
+            abort(403, 'Unauthorized.');
+        }
+
         $limit = $this->pagingLimit($request);
 
         return File::fromDisk($disk)->with('uploaded_by')->paginate($limit);
@@ -77,6 +85,10 @@ class FilesController extends Controller
      */
     public function store(Request $request)
     {
+        if (!$request->user()->can('store_files')) {
+            abort(403, 'Unauthorized.');
+        }
+
         $this->validator($request->all())->validate();
 
         $path = $request->file('file')->store('files', $request->input('disk'));

@@ -2,8 +2,10 @@
 
 namespace App\Providers;
 
+use App\Permission;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Schema;
 use Laravel\Passport\Passport;
 
 class AuthServiceProvider extends ServiceProvider
@@ -31,5 +33,25 @@ class AuthServiceProvider extends ServiceProvider
         Passport::tokensExpireIn(now()->addDays(1));
 
         // Passport::refreshTokensExpireIn(now()->addDays(2));
+
+        // Loop through all permissions and create a gate for each one.
+        // The gate checks if the role(s) a user has, has a particular permission
+        if (Schema::hasTable('permissions')) {
+            foreach ($this->getPermissions() as $permission) {
+                Gate::define($permission->name, function ($user) use ($permission) {
+                    return $user->hasRole($permission->roles);
+                });
+            }
+        }
+    }
+
+    /**
+     * Return all permissions
+     *
+     * @return array
+     */
+    protected function getPermissions()
+    {
+        return Permission::with('roles')->get();
     }
 }

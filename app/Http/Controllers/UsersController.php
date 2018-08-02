@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Traits\PagingLimit;
+use App\User;
 use Illuminate\Http\Request;
 
 class UsersController extends Controller
@@ -27,7 +28,24 @@ class UsersController extends Controller
      */
     public function fetch(Request $request)
     {
-        return $request->user()->load('files');
+        return $request->user()->with('roles')->get();
+    }
+
+    /**
+     * Return all users.
+     *
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\Response
+     */
+    public function fetchAll(Request $request)
+    {
+        if (!$request->user()->can('fetch_users')) {
+            abort(403, 'Unauthorized.');
+        }
+
+        $limit = $this->pagingLimit($request);
+
+        return User::with('roles')->paginate($limit);
     }
 
     /**
