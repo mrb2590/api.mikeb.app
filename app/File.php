@@ -32,8 +32,8 @@ class File extends Model
      * @var array
      */
     protected $fillable = [
-        'uploaded_by', 'original_filename', 'filename', 'extension',
-        'mime_type', 'path', 'size', 'bucket', 'url',
+        'uploaded_by', 'original_filename', 'basename', 'filename', 'extension',
+        'mime_type', 'path', 'size', 'disk', 'url',
     ];
 
     /**
@@ -63,15 +63,15 @@ class File extends Model
     }
 
     /**
-     * Ignore flagged signatures.
+     * Get files froma a disk.
      *
      * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param string $bucket
+     * @param string $disk
      * @param \Illuminate\Database\Eloquent\Builder
      */
-    public function scopeFromBucket($query, $bucket)
+    public function scopeFromDisk($query, $disk)
     {
-        return $query->where('bucket', $bucket);
+        return $query->where('disk', $disk);
     }
 
     /**

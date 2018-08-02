@@ -16,10 +16,7 @@ class FilesController extends Controller
      */
     public function __construct()
     {
-        // ini_set('upload_max_filesize', '20000M');
-        // ini_set('post_max_size', '20000M');
-        // ini_set('max_execution_time', '3600');
-        // ini_set('max_input_time', '3600');
+        //
     }
 
     /**
@@ -32,7 +29,7 @@ class FilesController extends Controller
     {
         return Validator::make($data, [
             'file' => 'required|file|max:20000000',
-            'bucket' => 'required|string|in:private,public',
+            'disk' => 'required|string|in:private,public',
             'filename' => 'nullable|string|max:255',
         ]);
     }
@@ -44,25 +41,17 @@ class FilesController extends Controller
      * @param  \App\file $file
      * @return \Illuminate\Http\Response
      */
-    public function fetch(Request $request, File $file = null)
+    public function fetch(Request $request, $disk = null, File $file = null)
     {
     	if ($file) {
     		return $file->load('uploaded_by');
     	}
 
-    	return File::paginate(20)->load('uploaded_by');
-    }
+    	elseif ($disk) {
+    		return File::fromDisk($disk)->load('uploaded_by')->paginate(20);
+    	}
 
-    /**
-     * Fetch files.
-     *
-     * @param  \Illuminate\Http\Request $request
-     * @param  string $bucket
-     * @return \Illuminate\Http\Response
-     */
-    public function fetchBucket(Request $request, $bucket)
-    {
-    	return File::fromBucket($bucket)->paginate(20)->load('uploaded_by');
+    	return File::with('uploaded_by')->paginate(20);
     }
 
     /**
@@ -75,7 +64,7 @@ class FilesController extends Controller
     {
         $this->validator($request->all())->validate();
 
-        $path = $request->file('file')->store('files', $request->input('bucket'));
+        $path = $request->file('file')->store('files', $request->input('disk'));
 
         $originalFilename = $request->has('filename')
         	? $request->input('filename')
@@ -86,13 +75,14 @@ class FilesController extends Controller
         $file = File::create([
         	'uploaded_by' => $request->user()->id,
         	'original_filename' => $originalFilename,
-        	'bucket' => $request->input('bucket'),
+        	'basename' => $pathInfo['basename'],
+        	'disk' => $request->input('disk'),
         	'path' => $path,
         	'filename' => $pathInfo['filename'],
         	'extension' => $pathInfo['extension'],
         	'mime_type' => $request->file('file')->getMimeType(),
-        	'size' => Storage::disk($request->input('bucket'))->size($path),
-        	'url' => Storage::disk($request->input('bucket'))->url($path),
+        	'size' => Storage::disk($request->input('disk'))->size($path),
+        	'url' => Storage::disk($request->input('disk'))->url($path),
         ]);
 
         return $file;

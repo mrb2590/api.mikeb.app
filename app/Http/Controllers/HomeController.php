@@ -29,10 +29,20 @@ class HomeController extends Controller
     /**
      * Show the application dashboard.
      *
+     * @param  \Illuminate\Http\Request $request
+     * @param  string $slug
      * @return \Illuminate\Http\Response
      */
-    public function home()
+    public function dashboard(Request $request, $slug)
     {
-        return view('home');
+        if ($slug == 'dashboard') {
+            return redirect()->route('dashboard', ['slug' => $request->user()->slug]);
+        }
+
+        if ($slug != $request->user()->slug) {
+            abort(404);
+        }
+
+        return view('dashboard');
     }
 }
