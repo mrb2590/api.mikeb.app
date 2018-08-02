@@ -3,12 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\File;
+use App\Traits\PagingLimit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 class FilesController extends Controller
 {
+    use PagingLimit;
+
     /**
      * Create a new controller instance.
      *
@@ -41,17 +44,29 @@ class FilesController extends Controller
      * @param  \App\file $file
      * @return \Illuminate\Http\Response
      */
-    public function fetch(Request $request, $disk = null, File $file = null)
+    public function fetch(Request $request, File $file = null)
     {
     	if ($file) {
     		return $file->load('uploaded_by');
     	}
 
-    	elseif ($disk) {
-    		return File::fromDisk($disk)->load('uploaded_by')->paginate(20);
-    	}
+        $limit = $this->pagingLimit($request);
 
-    	return File::with('uploaded_by')->paginate(20);
+    	return File::with('uploaded_by')->paginate($limit);
+    }
+
+    /**
+     * Fetch files from disk.
+     *
+     * @param  \Illuminate\Http\Request $request
+     * @param  string $disk
+     * @return \Illuminate\Http\Response
+     */
+    public function fetchDisk(Request $request, $disk)
+    {
+        $limit = $this->pagingLimit($request);
+
+        return File::fromDisk($disk)->with('uploaded_by')->paginate($limit);
     }
 
     /**
