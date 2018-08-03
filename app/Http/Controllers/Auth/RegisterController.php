@@ -70,6 +70,7 @@ class RegisterController extends Controller
             'slug' => str_slug(explode('@', $data['email'])[0], '-'),
             'password' => bcrypt($data['password']),
             'api_token' => str_random(60),
+            'status_id' => Status::where('name', 'good')->where('type', 'user')->first()->id,
         ]);
 
         $user->assignRole('member');

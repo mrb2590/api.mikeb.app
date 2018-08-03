@@ -7,38 +7,35 @@ use Illuminate\Http\File as IlluminateFile;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
-$factory->define(File::class, function (Faker $faker) {
-    $testStoragePath  = storage_path('app/testing/sample_files');
-    $sampleFiles = scandir($testStoragePath);
+$factory->define(File::class, function(Faker $faker) {
+    // Get a random user who will own this file
+    $user = User::inRandomOrder()->first();
 
-    unset($sampleFiles[0]);
-    unset($sampleFiles[1]);
+    // Get a random sample file
+    $sampleStoragePath = storage_path('app/testing/sample_files');
+    $sampleFiles = array_diff(scandir($sampleStoragePath), ['.', '..']);
+    $sampleAbsPath = $sampleStoragePath.'/'.$faker->randomElement($sampleFiles);
+    $samplePathinfo = pathinfo($sampleAbsPath);
+    $sampleFilename = $samplePathinfo['filename'];
 
-    $absPath = $testStoragePath.'/'.$faker->randomElement($sampleFiles);
-
-    $disk = $faker->randomElement(['public', 'private']);
-
-    $path = Storage::disk($disk)->putFile('files', new IlluminateFile($absPath));
-
-    $originalPathinfo = pathinfo($absPath);
-    $originalFilename = $originalPathinfo['filename'];
-
-    $newAbsPath = storage_path('app/'.$disk).'/'.$path;
-
-    $newFile = new UploadedFile($newAbsPath, $originalPathinfo['basename']);
-
-    $pathInfo = pathinfo($path);
+    // Copy the file to the disk
+    $disk = File::$defaultDisk;
+    $filePath = Storage::disk($disk)
+        ->putFile($user->storage_dir, new IlluminateFile($sampleAbsPath));
+    $fileAbsPath = storage_path('app/'.$disk).'/'.$filePath;
+    $filePathInfo = pathinfo($filePath);
 
     return [
-        'uploaded_by' => User::inRandomOrder()->first()->id,
-        'original_filename' => $originalFilename,
-        'basename' => $pathInfo['basename'],
+        'uploaded_by' => $user->id,
+        'owned_by' => $user->id,
+        'original_filename' => $sampleFilename,
+        'basename' => $filePathInfo['basename'],
         'disk' => $disk,
-        'path' => $path,
-        'filename' => $pathInfo['filename'],
-        'extension' => $pathInfo['extension'],
-        'mime_type' => $newFile->getMimeType(),
-        'size' => Storage::disk($disk)->size($path),
-        'url' => Storage::disk($disk)->url($path),
+        'path' => $filePath,
+        'filename' => $filePathInfo['filename'],
+        'extension' => $filePathInfo['extension'],
+        'mime_type' => (new UploadedFile($fileAbsPath, $samplePathinfo['basename']))->getMimeType(),
+        'size' => Storage::disk($disk)->size($filePath),
+        'url' => Storage::disk($disk)->url($filePath),
     ];
 });

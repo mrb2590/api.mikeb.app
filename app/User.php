@@ -3,6 +3,7 @@
 namespace App;
 
 use App\Traits\HasRoles;
+use App\Traits\OwnsObject;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -10,14 +11,14 @@ use Laravel\Passport\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasRoles, Notifiable, SoftDeletes;
+    use HasApiTokens, HasRoles, OwnsObject, Notifiable, SoftDeletes;
 
     /**
      * The attributes that should be mutated to dates.
      *
      * @var array
      */
-    protected $dates = ['deleted_at', 'updated_at', 'created_at'];
+    protected $dates = ['deleted_at'];
 
     /**
      * The attributes that are mass assignable.
@@ -25,7 +26,7 @@ class User extends Authenticatable
      * @var array
      */
     protected $fillable = [
-        'first_name', 'last_name', 'email', 'slug', 'password', 'api_token',
+        'first_name', 'last_name', 'email', 'slug', 'password', 'api_token', 'status_id',
     ];
 
     /**
@@ -36,6 +37,31 @@ class User extends Authenticatable
     protected $hidden = [
         'password', 'remember_token', 'api_token'
     ];
+
+    /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array
+     */
+    protected $appends = ['storage_dir'];
+
+    /**
+     * Get the size in a readable format.
+     *
+     * @return string   
+     */
+    public function getStorageDirAttribute()
+    {
+        return 'user_'.$this->id;
+    }
+
+    /**
+     * Get the status of the user.
+     */
+    public function status()
+    {
+        return $this->belongsTo(Status::class);
+    }
 
     /**
      * Get the files uploaded by this user.

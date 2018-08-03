@@ -1,8 +1,11 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
+use App\File;
+use App\User;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 
 class CreateUsersTable extends Migration
 {
@@ -21,6 +24,7 @@ class CreateUsersTable extends Migration
             $table->string('slug');
             $table->string('password');
             $table->char('api_token', 60);
+            $table->integer('status_id')->unsigned();
             $table->rememberToken();
             $table->softDeletes();
             $table->timestamps();
@@ -34,6 +38,15 @@ class CreateUsersTable extends Migration
      */
     public function down()
     {
+        // Delete all user storage directories from all disks
+        User::chunk(500, function($users) {
+            foreach ($users as $user) {
+                foreach (File::$disks as $disk) {
+                    Storage::disk($disk)->deleteDirectory($user->storage_dir);
+                }
+            }
+        });
+
         Schema::dropIfExists('users');
     }
 }
