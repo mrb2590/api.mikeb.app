@@ -35,7 +35,6 @@ $factory->define(File::class, function(Faker $faker) {
         'filename' => $filePathInfo['filename'],
         'extension' => $filePathInfo['extension'],
         'mime_type' => (new UploadedFile($fileAbsPath, $samplePathinfo['basename']))->getMimeType(),
-        'size' => Storage::disk($disk)->size($filePath),
-        'url' => Storage::disk($disk)->url($filePath),
+        'size' => Storage::disk($disk)->size($filePath)
     ];
 });

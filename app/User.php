@@ -56,6 +56,17 @@ class User extends Authenticatable
     }
 
     /**
+     * Get only public user information.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopePublicInfo($query)
+    {
+        return $query->select('id', 'first_name', 'last_name');
+    }
+
+    /**
      * Get the status of the user.
      */
     public function status()

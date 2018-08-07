@@ -16,40 +16,43 @@ use Illuminate\Http\Request;
 // Routes require authentication
 Route::middleware(['auth:api'])->prefix('v1')->group(function() {
 
-	/* User */
+    /* User */
 
-	// Fetch user
-	Route::get('/user', 'UsersController@fetch')->name('user.fetch');
+    // Fetch current user
+    Route::get('/user', 'UsersController@fetch')->name('user.fetch');
 
-	// Fetch all users
-	Route::get('/users', 'UsersController@fetchAll')->name('users.fetch');
+    // Fetch users
+    Route::get('/users/{user?}', 'UsersController@fetch')
+        ->where('user', '[0-9]+')->name('users.fetch');
 
-	// Fetch user files by disk or all
-	Route::get('/user/files/{disk?}', 'UsersController@fetchUserFiles')->name('user.files.fetch');
+    /* Files */
 
-	/* Files */
+    // Fetch files
+    Route::get('/files/{file?}', 'FilesController@fetch')
+        ->where('file', '[0-9]+')->name('files.fetch');
 
-	// Fetch all or a single file
-	Route::get('/files/{file?}', 'FilesController@fetch')
-		->where('file', '[0-9]+')->name('files.fetch');
+    // Upload files
+    Route::post('/files', 'FilesController@store')->name('files.store');
 
-	// Fetch files by disk
-	Route::get('/files/{disk}', 'FilesController@fetchDisk')
-		->where('disk', 'public|private')->name('files.disk.fetch');
+    // Trash file
+    Route::delete('/files/{file}', 'FilesController@trash')
+        ->where('file', '[0-9]+')->name('files.trash');
 
-	// Upload files
-	Route::post('/files', 'FilesController@store')->name('files.store');
+    // Delete file
+    Route::delete('/files/{trashedFile}/force', 'FilesController@delete')
+        ->where('trashedFile', '[0-9]+')->name('files.delete');
 
-	// Update file
-	Route::match(['get', 'post'], '/files/{file}', 'FilesController@delete')
-		->where('file', '[0-9]+')->name('files.update');
+    // Restore file
+    Route::post('/files/{trashedFile}/restore', 'FilesController@restore')
+        ->where('trashedFile', '[0-9]+')->name('files.restore');
 
-	// Remove file
-	Route::delete('/files/{file}', 'FilesController@delete')
-		->where('file', '[0-9]+')->name('files.delete');
+    // /* Roles */
 
-	// Restore file
-	Route::post('/files/{id}/restore', 'FilesController@restore')
-		->where('file', '[0-9]+')->name('files.restore');
+    // Fetch roles
+    Route::get('/roles/{role?}', 'RolesController@fetch')
+        ->where('role', '[0-9]+')->name('roles.fetch');
 
+    // Fetch roles with permissions
+    Route::get('/roles/permissions', 'RolesController@fetchPermissions')
+        ->where('role', '[0-9]+')->name('roles.permissions.fetch');
 });

@@ -18,7 +18,10 @@ trait PagingLimit
         $limit = 25;
 
         if ($request->has('limit')) {
-            $this->validate($request, ['limit' => 'nullable|integer|in:10,25,50,100']);
+            $this->validate($request, [
+                'page' => 'nullable|integer',
+                'limit' => 'nullable|integer|in:10,25,50,100',
+            ]);
 
             $limit = (int) $request->query('limit');
         }

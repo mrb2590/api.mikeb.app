@@ -92,7 +92,7 @@ class File extends Model
      */
     public function owned_by()
     {
-        return $this->belongsTo(User::class, 'owner_id');
+        return $this->belongsTo(User::class, 'owned_by')->publicInfo();
     }
 
     /**
@@ -100,6 +100,6 @@ class File extends Model
      */
     public function uploaded_by()
     {
-        return $this->belongsTo(User::class, 'uploaded_by');
+        return $this->belongsTo(User::class, 'uploaded_by')->publicInfo();
     }
 }

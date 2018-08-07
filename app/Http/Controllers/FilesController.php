@@ -24,22 +24,7 @@ class FilesController extends Controller
     }
 
     /**
-     * Get a validator for an incoming file upload request.
-     *
-     * @param  array  $data
-     * @return \Illuminate\Contracts\Validation\Validator
-     */
-    protected function validator(array $data)
-    {
-        return Validator::make($data, [
-            'file' => 'required|file|max:20000000',
-            'disk' => 'nullable|string|in:'.implode(',', File::$disks),
-            'filename' => 'nullable|string|max:255',
-        ]);
-    }
-
-    /**
-     * Fetch files.
+     * Fetch file(s).
      *
      * @param  \Illuminate\Http\Request $request
      * @param  \App\file $file
@@ -47,66 +32,53 @@ class FilesController extends Controller
      */
     public function fetch(Request $request, File $file = null)
     {
-        if ($request->user()->cant('fetch_files')) {
+        if ($request->user()->cannot('fetch_files')) {
             abort(403, 'Unauthorized.');
         }
 
-    	if ($file) {
-    		return $file->load('uploaded_by');
-    	}
-
-        if ($request->user()->cant('fetch_all_files')) {
-            abort(403, 'Unauthorized.');
+        if ($file) {
+            return $file->load('uploaded_by', 'owned_by');
         }
 
-        $limit = $this->pagingLimit($request);
-
-    	return File::with('uploaded_by')->paginate($limit);
-    }
-
-    /**
-     * Fetch files from disk.
-     *
-     * @param  \Illuminate\Http\Request $request
-     * @param  string $disk
-     * @return \Illuminate\Http\Response
-     */
-    public function fetchDisk(Request $request, $disk)
-    {
-        if ($request->user()->cant('fetch_files_disk') ||
-            $request->user()->cant('fetch_all_files')
-        ) {
+        if ($request->user()->cannot('fetch_all_files')) {
             abort(403, 'Unauthorized.');
         }
 
         $limit = $this->pagingLimit($request);
 
-        return File::fromDisk($disk)->with('uploaded_by')->paginate($limit);
+        $this->validate($request, [
+            'owned_by' => 'nullable|integer|exists:users,id',
+            'uploaded_by' => 'nullable|integer|exists:users,id',
+        ]);
+
+        $files = File::with(['uploaded_by', 'owned_by']);
+
+        if ($request->has('owned_by')) {
+            $files->where('owned_by', $request->input('owned_by'));
+        }
+
+        if ($request->has('uploaded_by')) {
+            $files->where('uploaded_by', $request->input('uploaded_by'));
+        }
+
+        return $files->paginate($limit);
     }
 
     /**
-     * Store a file upload.
+     * Store a file.
      *
      * @param  \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
     {
-        if ($request->user()->cant('store_files')) {
+        if ($request->user()->cannot('store_files')) {
             abort(403, 'Unauthorized.');
         }
 
-        if ($request->has('disk')) {
-            if ($request->user()->cant('select_file_disk')) {
-                abort(403, 'Unauthorized.');
-            }
+        $this->validate($request, ['file' => 'required|file|max:20000000']);
 
-            $disk = $request->input('disk');
-        } else {
-            $disk = File::$defaultDisk;
-        }
-
-        $this->validator($request->all())->validate();
+        $disk = File::$defaultDisk;
 
         $filename = Str::random(40).'.'.$request->file('file')->getClientOriginalExtension();
 
@@ -114,63 +86,89 @@ class FilesController extends Controller
             ->putFileAs($request->user()->storage_dir, $request->file('file'), $filename);
 
         $originalFilename = $request->has('filename')
-        	? $request->input('filename')
-        	: pathinfo($request->file('file')->getClientOriginalName())['filename'];
+            ? $request->input('filename')
+            : pathinfo($request->file('file')->getClientOriginalName())['filename'];
 
         $pathInfo = pathinfo($path);
 
         $file = File::create([
-        	'uploaded_by' => $request->user()->id,
+            'uploaded_by' => $request->user()->id,
             'owned_by' => $request->user()->id,
-        	'original_filename' => $originalFilename,
-        	'basename' => $pathInfo['basename'],
-        	'disk' => $disk,
-        	'path' => $path,
-        	'filename' => $pathInfo['filename'],
-        	'extension' => $pathInfo['extension'],
-        	'mime_type' => $request->file('file')->getMimeType(),
-        	'size' => Storage::disk($disk)->size($path),
-        	'url' => Storage::disk($disk)->url($path),
+            'original_filename' => $originalFilename,
+            'basename' => $pathInfo['basename'],
+            'disk' => $disk,
+            'path' => $path,
+            'filename' => $pathInfo['filename'],
+            'extension' => $pathInfo['extension'],
+            'mime_type' => $request->file('file')->getMimeType(),
+            'size' => Storage::disk($disk)->size($path),
         ]);
 
         return $file;
     }
 
     /**
-     * Delete a file.
+     * Trash a file.
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  \App\file $file
+     * @return \Illuminate\Http\Response
      */
-    public function delete(Request $request, File $file)
+    public function trash(Request $request, File $file)
     {
-        if ($request->user()->cant('remove_all_files') &&
-            ($request->user()->cant('remove_files') ||
-            $request->user()->doesntOwn($file))
+        if ($request->user()->cannot('remove_all_files') &&
+            ($request->user()->cannot('remove_files') ||
+            $request->user()->doesNotOwn($file))
         ) {
             abort(403, 'Unauthorized.');
         }
 
         $file->delete();
+
+        return response('', 204);
     }
 
     /**
-     * Restore a file (if not permanently deleted).
+     * Delete a file.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  integer $id
+     * @param  \App\file $trashedFile
+     * @return \Illuminate\Http\Response
      */
-    public function restore(Request $request, $id)
+    public function delete(Request $request, File $trashedFile)
     {
-        $file = File::withTrashed()->findOrFail($id);
-
-        if ($request->user()->cant('remove_all_files') &&
-            ($request->user()->cant('remove_files') ||
-            $request->user()->doesntOwn($file))
+        if ($request->user()->cannot('remove_all_files') &&
+            ($request->user()->cannot('remove_files') ||
+            $request->user()->doesNotOwn($trashedFile))
         ) {
             abort(403, 'Unauthorized.');
         }
 
-        $file->restore();
+        Storage::disk(File::$defaultDisk)->delete($trashedFile->path);
+
+        $trashedFile->forceDelete();
+
+        return response('', 204);
+    }
+
+    /**
+     * Restore a trashed file.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\file $trashedFile
+     * @return \Illuminate\Http\Response
+     */
+    public function restore(Request $request, File $trashedFile)
+    {
+        if ($request->user()->cannot('remove_all_files') &&
+            ($request->user()->cannot('remove_files') ||
+            $request->user()->doesNotOwn($trashedFile))
+        ) {
+            abort(403, 'Unauthorized.');
+        }
+
+        $trashedFile->restore();
+
+        return response('', 204);
     }
 }
