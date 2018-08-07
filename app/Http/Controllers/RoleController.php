@@ -6,7 +6,7 @@ use App\Role;
 use App\Traits\PagingLimit;
 use Illuminate\Http\Request;
 
-class RolesController extends Controller
+class RoleController extends Controller
 {
     use PagingLimit;
 

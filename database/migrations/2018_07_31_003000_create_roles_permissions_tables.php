@@ -170,17 +170,65 @@ class CreateRolesPermissionsTables extends Migration
             'updated_at' => \Carbon\Carbon::now()->toDateTimeString()
         ]);
 
+        $fetchAllDirectoriesPermissionId = DB::table('permissions')->insertGetId([
+            'name' => 'fetch_all_directories',
+            'display_name' => 'Fetch All Directories',
+            'description' => 'Fetch all directories.',
+            'created_at' => \Carbon\Carbon::now()->toDateTimeString(),
+            'updated_at' => \Carbon\Carbon::now()->toDateTimeString()
+        ]);
+
+        $removeAllDirectoriesPermissionId = DB::table('permissions')->insertGetId([
+            'name' => 'remove_all_directories',
+            'display_name' => 'Remove All Directories',
+            'description' => 'Remove all directories.',
+            'created_at' => \Carbon\Carbon::now()->toDateTimeString(),
+            'updated_at' => \Carbon\Carbon::now()->toDateTimeString()
+        ]);
+
+        $fetchDirectoriesPermissionId = DB::table('permissions')->insertGetId([
+            'name' => 'fetch_directories',
+            'display_name' => 'Fetch Directories',
+            'description' => 'Fetch directories.',
+            'created_at' => \Carbon\Carbon::now()->toDateTimeString(),
+            'updated_at' => \Carbon\Carbon::now()->toDateTimeString()
+        ]);
+
+        $storeDirectoriesPermissionId = DB::table('permissions')->insertGetId([
+            'name' => 'store_directories',
+            'display_name' => 'Store Directories',
+            'description' => 'Store directories.',
+            'created_at' => \Carbon\Carbon::now()->toDateTimeString(),
+            'updated_at' => \Carbon\Carbon::now()->toDateTimeString()
+        ]);
+
+        $removeDirectoriesPermissionId = DB::table('permissions')->insertGetId([
+            'name' => 'remove_directories',
+            'display_name' => 'Remove Directories',
+            'description' => 'Remove directories.',
+            'created_at' => \Carbon\Carbon::now()->toDateTimeString(),
+            'updated_at' => \Carbon\Carbon::now()->toDateTimeString()
+        ]);
+
+        $shareDirectoriesPermissionId = DB::table('permissions')->insertGetId([
+            'name' => 'share_directories',
+            'display_name' => 'Share Directories',
+            'description' => 'Share directories with public links.',
+            'created_at' => \Carbon\Carbon::now()->toDateTimeString(),
+            'updated_at' => \Carbon\Carbon::now()->toDateTimeString()
+        ]);
+
         $selectFileDiskPermissionId = DB::table('permissions')->insertGetId([
-            'name' => 'select_file_disk',
-            'display_name' => 'Select File Disk',
-            'description' => 'Select a file disk to store files other than default.',
+            'name' => 'select_disk',
+            'display_name' => 'Select Disk',
+            'description' => 'Select a disk to store files other than default.',
             'created_at' => \Carbon\Carbon::now()->toDateTimeString(),
             'updated_at' => \Carbon\Carbon::now()->toDateTimeString()
         ]);
 
         $fetchFileDiskPermissionId = DB::table('permissions')->insertGetId([
-            'name' => 'fetch_files_disk',
-            'display_name' => 'Fetch File Disk',
+            'name' => 'fetch__disk',
+            'display_name' => 'Fetch Disk',
             'description' => 'Fetch files from a disk other than default.',
             'created_at' => \Carbon\Carbon::now()->toDateTimeString(),
             'updated_at' => \Carbon\Carbon::now()->toDateTimeString()
@@ -245,6 +293,36 @@ class CreateRolesPermissionsTables extends Migration
         ]);
 
         DB::table('permission_role')->insert([
+            'permission_id' => $fetchAllDirectoriesPermissionId,
+            'role_id' => $superRoleId
+        ]);
+
+        DB::table('permission_role')->insert([
+            'permission_id' => $removeAllDirectoriesPermissionId,
+            'role_id' => $superRoleId
+        ]);
+
+        DB::table('permission_role')->insert([
+            'permission_id' => $fetchDirectoriesPermissionId,
+            'role_id' => $superRoleId
+        ]);
+
+        DB::table('permission_role')->insert([
+            'permission_id' => $storeDirectoriesPermissionId,
+            'role_id' => $superRoleId
+        ]);
+
+        DB::table('permission_role')->insert([
+            'permission_id' => $removeDirectoriesPermissionId,
+            'role_id' => $superRoleId
+        ]);
+
+        DB::table('permission_role')->insert([
+            'permission_id' => $shareDirectoriesPermissionId,
+            'role_id' => $superRoleId
+        ]);
+
+        DB::table('permission_role')->insert([
             'permission_id' => $selectFileDiskPermissionId,
             'role_id' => $superRoleId
         ]);
@@ -289,6 +367,26 @@ class CreateRolesPermissionsTables extends Migration
             'permission_id' => $shareFilesPermissionId,
             'role_id' => $adminRoleId
         ]);
+
+        DB::table('permission_role')->insert([
+            'permission_id' => $fetchDirectoriesPermissionId,
+            'role_id' => $adminRoleId
+        ]);
+
+        DB::table('permission_role')->insert([
+            'permission_id' => $storeDirectoriesPermissionId,
+            'role_id' => $adminRoleId
+        ]);
+
+        DB::table('permission_role')->insert([
+            'permission_id' => $removeDirectoriesPermissionId,
+            'role_id' => $adminRoleId
+        ]);
+
+        DB::table('permission_role')->insert([
+            'permission_id' => $shareDirectoriesPermissionId,
+            'role_id' => $adminRoleId
+        ]);
         
         // Member Permissions
         DB::table('permission_role')->insert([
@@ -310,6 +408,26 @@ class CreateRolesPermissionsTables extends Migration
             'permission_id' => $shareFilesPermissionId,
             'role_id' => $memberRoleId
         ]);
+
+        DB::table('permission_role')->insert([
+            'permission_id' => $fetchDirectoriesPermissionId,
+            'role_id' => $memberRoleId
+        ]);
+
+        DB::table('permission_role')->insert([
+            'permission_id' => $storeDirectoriesPermissionId,
+            'role_id' => $memberRoleId
+        ]);
+
+        DB::table('permission_role')->insert([
+            'permission_id' => $removeDirectoriesPermissionId,
+            'role_id' => $memberRoleId
+        ]);
+
+        DB::table('permission_role')->insert([
+            'permission_id' => $shareDirectoriesPermissionId,
+            'role_id' => $memberRoleId
+        ]);
         
         // Viewer Permissions
         DB::table('permission_role')->insert([
@@ -318,7 +436,7 @@ class CreateRolesPermissionsTables extends Migration
         ]);
 
         DB::table('permission_role')->insert([
-            'permission_id' => $shareFilesPermissionId,
+            'permission_id' => $fetchDirectoriesPermissionId,
             'role_id' => $viewerRoleId
         ]);
     }

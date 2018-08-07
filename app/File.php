@@ -37,6 +37,7 @@ class File extends Model
      */
     protected $casts = [
         'uploaded_by' => 'integer',
+        'owned_by' => 'integer',
         'size' => 'integer',
     ];
 
@@ -46,8 +47,8 @@ class File extends Model
      * @var array
      */
     protected $fillable = [
-        'uploaded_by', 'owned_by', 'original_filename', 'basename', 'filename', 'extension',
-        'mime_type', 'path', 'size', 'disk', 'url',
+        'original_filename', 'basename', 'filename', 'extension', 'mime_type', 'path', 'size',
+        'disk', 'directory', 'owned_by', 'created_by',
     ];
 
     /**
@@ -70,7 +71,7 @@ class File extends Model
         $factor = floor((strlen($this->size) - 1) / 3);
 
         $sizeReadable = sprintf("%.2f", $this->size / pow(1024, $factor));
-        $sizeReadable .= ' ' . @$size[$factor];
+        $sizeReadable .= ' '.@$size[$factor];
 
         return $sizeReadable;
     }
@@ -88,6 +89,15 @@ class File extends Model
     }
 
     /**
+     * Get the directory the file belongs to.
+     */
+    public function directory()
+    {
+        return $this->belongsTo(Directory::class, 'directory');
+    }
+      
+
+    /**
      * Get the owner of the file.
      */
     public function owned_by()
@@ -96,10 +106,10 @@ class File extends Model
     }
 
     /**
-     * Get the user who uploaded the file.
+     * Get the creator the file.
      */
-    public function uploaded_by()
+    public function created_by()
     {
-        return $this->belongsTo(User::class, 'uploaded_by')->publicInfo();
+        return $this->belongsTo(User::class, 'created_by')->publicInfo();
     }
 }

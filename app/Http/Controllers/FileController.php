@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
-class FilesController extends Controller
+class FileController extends Controller
 {
     use PagingLimit;
 
@@ -37,7 +37,7 @@ class FilesController extends Controller
         }
 
         if ($file) {
-            return $file->load('uploaded_by', 'owned_by');
+            return $file->load('created_by', 'owned_by');
         }
 
         if ($request->user()->cannot('fetch_all_files')) {
@@ -48,17 +48,17 @@ class FilesController extends Controller
 
         $this->validate($request, [
             'owned_by' => 'nullable|integer|exists:users,id',
-            'uploaded_by' => 'nullable|integer|exists:users,id',
+            'created_by' => 'nullable|integer|exists:users,id',
         ]);
 
-        $files = File::with(['uploaded_by', 'owned_by']);
+        $files = File::with(['created_by', 'owned_by']);
 
         if ($request->has('owned_by')) {
             $files->where('owned_by', $request->input('owned_by'));
         }
 
-        if ($request->has('uploaded_by')) {
-            $files->where('uploaded_by', $request->input('uploaded_by'));
+        if ($request->has('created_by')) {
+            $files->where('created_by', $request->input('created_by'));
         }
 
         return $files->paginate($limit);
@@ -76,7 +76,10 @@ class FilesController extends Controller
             abort(403, 'Unauthorized.');
         }
 
-        $this->validate($request, ['file' => 'required|file|max:20000000']);
+        $this->validate($request, [
+            'file' => 'required|file|max:20000000',
+            'directory' => 'nullable|integer|exists:directories,id', // To do: make sure user owns dir
+        ]);
 
         $disk = File::$defaultDisk;
 
@@ -92,8 +95,6 @@ class FilesController extends Controller
         $pathInfo = pathinfo($path);
 
         $file = File::create([
-            'uploaded_by' => $request->user()->id,
-            'owned_by' => $request->user()->id,
             'original_filename' => $originalFilename,
             'basename' => $pathInfo['basename'],
             'disk' => $disk,
@@ -102,9 +103,12 @@ class FilesController extends Controller
             'extension' => $pathInfo['extension'],
             'mime_type' => $request->file('file')->getMimeType(),
             'size' => Storage::disk($disk)->size($path),
+            'directory' => $request->input('directory'),
+            'owned_by' => $request->user()->id,
+            'created_by' => $request->user()->id,
         ]);
 
-        return $file;
+        return $file->load('created_by', 'owned_by');
     }
 
     /**
@@ -125,7 +129,7 @@ class FilesController extends Controller
         $file->original_filename = $request->input('filename');
         $file->save();
 
-        return $file;
+        return $file->load('created_by', 'owned_by');
     }
 
     /**

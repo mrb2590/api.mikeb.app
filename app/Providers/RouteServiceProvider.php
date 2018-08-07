@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Directory;
 use App\File;
 use App\User;
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
@@ -27,12 +28,16 @@ class RouteServiceProvider extends ServiceProvider
     {
         parent::boot();
 
+        Route::bind('trashedUser', function ($value) {
+            return User::onlyTrashed()->find($value);
+        });
+
         Route::bind('trashedFile', function ($value) {
             return File::onlyTrashed()->find($value);
         });
 
-        Route::bind('trashedUser', function ($value) {
-            return User::onlyTrashed()->find($value);
+        Route::bind('trashedDirectory', function ($value) {
+            return Directory::onlyTrashed()->find($value);
         });
     }
 

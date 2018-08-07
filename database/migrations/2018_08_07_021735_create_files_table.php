@@ -17,8 +17,6 @@ class CreateFilesTable extends Migration
     {
         Schema::create('files', function (Blueprint $table) {
             $table->increments('id');
-            $table->integer('uploaded_by')->unsigned();
-            $table->integer('owned_by')->unsigned();
             $table->string('original_filename');
             $table->string('basename');
             $table->string('disk', 7);
@@ -27,10 +25,14 @@ class CreateFilesTable extends Migration
             $table->string('extension', 6);
             $table->string('mime_type');
             $table->bigInteger('size')->unsigned();
+            $table->integer('directory')->unsigned()->nullable();
+            $table->integer('owned_by')->unsigned();
+            $table->integer('created_by')->unsigned();
             $table->softDeletes();
             $table->timestamps();
 
-            $table->foreign('uploaded_by')->references('id')->on('users')->onDelete('cascade');
+            $table->foreign('directory')->references('id')->on('directories')->onDelete('cascade');
+            $table->foreign('created_by')->references('id')->on('users')->onDelete('no action');
             $table->foreign('owned_by')->references('id')->on('users')->onDelete('cascade');
         });
     }

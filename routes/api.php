@@ -16,66 +16,91 @@ use Illuminate\Http\Request;
 // Routes require authentication
 Route::middleware(['auth:api'])->prefix('v1')->group(function() {
 
-    /* User */
+    /* Users */
 
     // Fetch current user
-    Route::get('/user', 'UsersController@fetch')->name('user.fetch');
+    Route::get('/user', 'UserController@fetch')->name('user.fetch');
 
     // Fetch users
-    Route::get('/users/{user?}', 'UsersController@fetch')
+    Route::get('/users/{user?}', 'UserController@fetch')
         ->where('user', '[0-9]+')->name('users.fetch');
 
     // Store user
-    Route::post('/users', 'UsersController@store')->name('users.store');
+    Route::post('/users', 'UserController@store')->name('users.store');
 
     // Update user
-    Route::patch('/users/{user}', 'UsersController@update')
+    Route::patch('/users/{user}', 'UserController@update')
         ->where('user', '[0-9]+')->name('users.update');
 
     // Trash user
-    Route::delete('/users/{user}', 'UsersController@trash')
+    Route::delete('/users/{user}', 'UserController@trash')
         ->where('user', '[0-9]+')->name('users.trash');
 
     // Delete user
-    Route::delete('/users/{trashedUser}/force', 'UsersController@delete')
+    Route::delete('/users/{trashedUser}/force', 'UserController@delete')
         ->where('trashedUser', '[0-9]+')->name('users.delete');
 
     // Restore user
-    Route::post('/users/{trashedUser}/restore', 'UsersController@restore')
+    Route::post('/users/{trashedUser}/restore', 'UserController@restore')
         ->where('trashedUser', '[0-9]+')->name('users.restore');
+
+    /* Roles */
+
+    // Fetch roles
+    Route::get('/roles/{role?}', 'RoleController@fetch')
+        ->where('role', '[0-9]+')->name('roles.fetch');
+
+    // Fetch roles with permissions
+    Route::get('/roles/permissions', 'RoleController@fetchPermissions')
+        ->where('role', '[0-9]+')->name('roles.permissions.fetch');
 
     /* Files */
 
     // Fetch files
-    Route::get('/files/{file?}', 'FilesController@fetch')
+    Route::get('/files/{file?}', 'FileController@fetch')
         ->where('file', '[0-9]+')->name('files.fetch');
 
-    // Upload file
-    Route::post('/files', 'FilesController@store')->name('files.store');
+    // Store file
+    Route::post('/files', 'FileController@store')->name('files.store');
 
     // Update file
-    Route::patch('/files/{file}', 'FilesController@update')
+    Route::patch('/files/{file}', 'FileController@update')
         ->where('file', '[0-9]+')->name('files.update');
 
     // Trash file
-    Route::delete('/files/{file}', 'FilesController@trash')
+    Route::delete('/files/{file}', 'FileController@trash')
         ->where('file', '[0-9]+')->name('files.trash');
 
     // Delete file
-    Route::delete('/files/{trashedFile}/force', 'FilesController@delete')
+    Route::delete('/files/{trashedFile}/force', 'FileController@delete')
         ->where('trashedFile', '[0-9]+')->name('files.delete');
 
     // Restore file
-    Route::post('/files/{trashedFile}/restore', 'FilesController@restore')
+    Route::post('/files/{trashedFile}/restore', 'FileController@restore')
         ->where('trashedFile', '[0-9]+')->name('files.restore');
 
-    // /* Roles */
+    /* Files */
 
-    // Fetch roles
-    Route::get('/roles/{role?}', 'RolesController@fetch')
-        ->where('role', '[0-9]+')->name('roles.fetch');
+    // Fetch directories
+    Route::get('/directories/{directory?}', 'DirectoryController@fetch')
+        ->where('directory', '[0-9]+')->name('directories.fetch');
 
-    // Fetch roles with permissions
-    Route::get('/roles/permissions', 'RolesController@fetchPermissions')
-        ->where('role', '[0-9]+')->name('roles.permissions.fetch');
+    // Store directory
+    Route::post('/directories', 'DirectoryController@store')->name('directories.store');
+
+    // Update directory
+    Route::patch('/directories/{directory}', 'DirectoryController@update')
+        ->where('directory', '[0-9]+')->name('directories.update');
+
+    // Trash directory
+    Route::delete('/directories/{directory}', 'DirectoryController@trash')
+        ->where('directory', '[0-9]+')->name('directories.trash');
+
+    // Delete directory
+    Route::delete('/directories/{trashedFile}/force', 'DirectoryController@delete')
+        ->where('trashedFile', '[0-9]+')->name('directories.delete');
+
+    // Restore directory
+    Route::post('/directories/{trashedFile}/restore', 'DirectoryController@restore')
+        ->where('trashedFile', '[0-9]+')->name('directories.restore');
 });

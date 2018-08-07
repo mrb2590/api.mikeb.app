@@ -1,5 +1,6 @@
 <?php
 
+use App\Directory;
 use App\File;
 use App\Status;
 use App\User;
@@ -43,8 +44,10 @@ class DatabaseSeeder extends Seeder
             ]));
         });
 
+        // Create 25 random directories
+        factory(Directory::class, 50)->create();
+
         // Create 50 random files
         factory(File::class, 50)->create();
-
     }
 }

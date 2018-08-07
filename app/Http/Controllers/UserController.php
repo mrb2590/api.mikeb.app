@@ -9,7 +9,7 @@ use App\User;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
-class UsersController extends Controller
+class UserController extends Controller
 {
     use PagingLimit;
 
