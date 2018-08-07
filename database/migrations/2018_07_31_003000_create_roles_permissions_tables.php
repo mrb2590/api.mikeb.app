@@ -106,6 +106,14 @@ class CreateRolesPermissionsTables extends Migration
             'updated_at' => \Carbon\Carbon::now()->toDateTimeString()
         ]);
 
+        $updateUsersPermissionId = DB::table('permissions')->insertGetId([
+            'name' => 'update_users',
+            'display_name' => 'Update Users',
+            'description' => 'Update user\'s information.',
+            'created_at' => \Carbon\Carbon::now()->toDateTimeString(),
+            'updated_at' => \Carbon\Carbon::now()->toDateTimeString()
+        ]);
+
         $removeUsersPermissionId = DB::table('permissions')->insertGetId([
             'name' => 'remove_users',
             'display_name' => 'Remove Users',
@@ -197,6 +205,11 @@ class CreateRolesPermissionsTables extends Migration
         ]);
 
         DB::table('permission_role')->insert([
+            'permission_id' => $updateUsersPermissionId,
+            'role_id' => $superRoleId
+        ]);
+
+        DB::table('permission_role')->insert([
             'permission_id' => $removeUsersPermissionId,
             'role_id' => $superRoleId
         ]);
@@ -244,6 +257,11 @@ class CreateRolesPermissionsTables extends Migration
         // Admin Permissions
         DB::table('permission_role')->insert([
             'permission_id' => $addUsersPermissionId,
+            'role_id' => $adminRoleId
+        ]);
+
+        DB::table('permission_role')->insert([
+            'permission_id' => $updateUsersPermissionId,
             'role_id' => $adminRoleId
         ]);
 

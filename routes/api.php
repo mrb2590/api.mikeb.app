@@ -25,14 +25,37 @@ Route::middleware(['auth:api'])->prefix('v1')->group(function() {
     Route::get('/users/{user?}', 'UsersController@fetch')
         ->where('user', '[0-9]+')->name('users.fetch');
 
+    // Store user
+    Route::post('/users', 'UsersController@store')->name('users.store');
+
+    // Update user
+    Route::patch('/users/{user}', 'UsersController@update')
+        ->where('user', '[0-9]+')->name('users.update');
+
+    // Trash user
+    Route::delete('/users/{user}', 'UsersController@trash')
+        ->where('user', '[0-9]+')->name('users.trash');
+
+    // Delete user
+    Route::delete('/users/{trashedUser}/force', 'UsersController@delete')
+        ->where('trashedUser', '[0-9]+')->name('users.delete');
+
+    // Restore user
+    Route::post('/users/{trashedUser}/restore', 'UsersController@restore')
+        ->where('trashedUser', '[0-9]+')->name('users.restore');
+
     /* Files */
 
     // Fetch files
     Route::get('/files/{file?}', 'FilesController@fetch')
         ->where('file', '[0-9]+')->name('files.fetch');
 
-    // Upload files
+    // Upload file
     Route::post('/files', 'FilesController@store')->name('files.store');
+
+    // Update file
+    Route::patch('/files/{file}', 'FilesController@update')
+        ->where('file', '[0-9]+')->name('files.update');
 
     // Trash file
     Route::delete('/files/{file}', 'FilesController@trash')

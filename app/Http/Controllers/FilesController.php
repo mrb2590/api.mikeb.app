@@ -27,7 +27,7 @@ class FilesController extends Controller
      * Fetch file(s).
      *
      * @param  \Illuminate\Http\Request $request
-     * @param  \App\file $file
+     * @param  \App\File $file
      * @return \Illuminate\Http\Response
      */
     public function fetch(Request $request, File $file = null)
@@ -108,10 +108,31 @@ class FilesController extends Controller
     }
 
     /**
+     * Update a file.
+     *
+     * @param  \Illuminate\Http\Request $request
+     * @param  \App\File $file
+     * @return \Illuminate\Http\Response
+     */
+    public function update(Request $request, File $file)
+    {
+        if ($request->user()->cannot('store_files')) {
+            abort(403, 'Unauthorized.');
+        }
+
+        $this->validate($request, ['filename' => 'required|string|max:255']);
+
+        $file->original_filename = $request->input('filename');
+        $file->save();
+
+        return $file;
+    }
+
+    /**
      * Trash a file.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \App\file $file
+     * @param  \App\File $file
      * @return \Illuminate\Http\Response
      */
     public function trash(Request $request, File $file)
@@ -132,7 +153,7 @@ class FilesController extends Controller
      * Delete a file.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \App\file $trashedFile
+     * @param  \App\File $trashedFile
      * @return \Illuminate\Http\Response
      */
     public function delete(Request $request, File $trashedFile)
@@ -155,7 +176,7 @@ class FilesController extends Controller
      * Restore a trashed file.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \App\file $trashedFile
+     * @param  \App\File $trashedFile
      * @return \Illuminate\Http\Response
      */
     public function restore(Request $request, File $trashedFile)

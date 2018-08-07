@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\File;
+use App\User;
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Route;
 
@@ -28,6 +29,10 @@ class RouteServiceProvider extends ServiceProvider
 
         Route::bind('trashedFile', function ($value) {
             return File::onlyTrashed()->find($value);
+        });
+
+        Route::bind('trashedUser', function ($value) {
+            return User::onlyTrashed()->find($value);
         });
     }
 
