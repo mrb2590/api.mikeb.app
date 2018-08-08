@@ -24,7 +24,7 @@ class UserController extends Controller
     }
 
     /**
-     * Return user(s).
+     * Return users.
      *
      * @param  \Illuminate\Http\Request $request
      * @param  \App\User $user

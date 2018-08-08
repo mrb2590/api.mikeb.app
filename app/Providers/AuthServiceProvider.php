@@ -32,7 +32,8 @@ class AuthServiceProvider extends ServiceProvider
 
         Passport::tokensExpireIn(now()->addDays(1));
 
-        // Passport::refreshTokensExpireIn(now()->addDays(2));
+        // Revoke token if unused for six months
+        Passport::refreshTokensExpireIn(now()->addMonths(6));
 
         // Loop through all permissions and create a gate for each one.
         // The gate checks if the role(s) a user has, has a particular permission

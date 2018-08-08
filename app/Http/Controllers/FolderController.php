@@ -84,7 +84,7 @@ class FolderController extends Controller
         if (($request->user()->cannot('fetch_all_files') ||
             $request->user()->cannot('fetch_all_folders')) ||
             ($request->user()->cannot('fetch_folders') ||
-            $request->user()->cannot('fetch_files') ||
+            $request->user()->cannot('fetch_files') &&
             $request->user()->doesNotOwn($folder)) 
         ) {
             abort(403, 'Unauthorized.');
