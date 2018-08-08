@@ -9,9 +9,9 @@ trait OwnsObject
      *
      * @param object $object
      */
-    protected function owns($object)
+    public function owns($object)
     {
-        return $this->id === $object->owned_by;
+        return $this->id === $object->owned_by_id;
     }
 
     /**
@@ -19,7 +19,7 @@ trait OwnsObject
      *
      * @param object $object
      */
-    protected function doesNotOwn($object)
+    public function doesNotOwn($object)
     {
         return ! $this->owns($object);
     }

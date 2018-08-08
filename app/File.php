@@ -36,9 +36,10 @@ class File extends Model
      * @var array
      */
     protected $casts = [
-        'uploaded_by' => 'integer',
-        'owned_by' => 'integer',
         'size' => 'integer',
+        'folder_id' => 'integer',
+        'owned_by_id' => 'integer',
+        'created_by_id' => 'integer',
     ];
 
     /**
@@ -48,7 +49,7 @@ class File extends Model
      */
     protected $fillable = [
         'original_filename', 'basename', 'filename', 'extension', 'mime_type', 'path', 'size',
-        'disk', 'directory', 'owned_by', 'created_by',
+        'disk', 'folder_id', 'owned_by_id', 'created_by_id',
     ];
 
     /**
@@ -57,6 +58,13 @@ class File extends Model
      * @var array
      */
     protected $appends = ['size_readable'];
+
+    /**
+     * The relationships to always load.
+     *
+     * @var array
+     */
+    protected $with = ['owned_by', 'created_by'];
 
     /**
      * Get the size in a readable format.
@@ -89,20 +97,19 @@ class File extends Model
     }
 
     /**
-     * Get the directory the file belongs to.
+     * Get the folder the file belongs to.
      */
-    public function directory()
+    public function folder()
     {
-        return $this->belongsTo(Directory::class, 'directory');
+        return $this->belongsTo(Folder::class, 'folder_id');
     }
-      
 
     /**
      * Get the owner of the file.
      */
     public function owned_by()
     {
-        return $this->belongsTo(User::class, 'owned_by')->publicInfo();
+        return $this->belongsTo(User::class, 'owned_by_id')->publicInfo();
     }
 
     /**
@@ -110,6 +117,6 @@ class File extends Model
      */
     public function created_by()
     {
-        return $this->belongsTo(User::class, 'created_by')->publicInfo();
+        return $this->belongsTo(User::class, 'created_by_id')->publicInfo();
     }
 }

@@ -97,7 +97,10 @@ class UserController extends Controller
      */
     public function update(Request $request, User $user)
     {
-        if ($request->user()->cannot('update_users')) {
+        if ($request->user()->cannot('edit_all_users') &&
+            ($request->user()->cannot('edit_users') ||
+            $request->user()->isNot($user))
+        ) {
             abort(403, 'Unauthorized.');
         }
 
@@ -124,15 +127,18 @@ class UserController extends Controller
             $data['slug'] = str_slug(explode('@', $data['email'])[0], '-');
         }
 
-        if ($request->has('status')) {
-            $data['status_id'] = Status::where('name', $data['status'])->first()->id;
-        }
-
         $user->fill($data)->save();
 
-        if ($request->has('role')) {
-            $user->roles()->detach();
-            $user->assignRole($request->input('role'));
+        if ($request->user()->can('edit_all_users')) {
+            if ($request->has('role')) {
+                $user->roles()->detach();
+                $user->assignRole($request->input('role'));
+            }
+
+            if ($request->has('status')) {
+                $user->status_id = Status::where('name', $data['status'])->first()->id;
+                $user->save();
+            }
         }
 
         return $user->load('roles', 'status');

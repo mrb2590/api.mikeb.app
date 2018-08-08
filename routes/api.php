@@ -54,6 +54,43 @@ Route::middleware(['auth:api'])->prefix('v1')->group(function() {
     Route::get('/roles/permissions', 'RoleController@fetchPermissions')
         ->where('role', '[0-9]+')->name('roles.permissions.fetch');
 
+    /* Folders */
+
+    // Fetch folders
+    Route::get('/folders/{folder?}', 'FolderController@fetch')
+        ->where('folder', '[0-9]+')->name('folders.fetch');
+
+    // Fetch files from folder
+    Route::get('/folders/{folder}/files', 'FolderController@fetchFiles')
+        ->where('folder', '[0-9]+')->name('folders.files.fetch');
+
+    // Store folder
+    Route::post('/folders', 'FolderController@store')->name('folders.store');
+
+    // Update folder
+    Route::patch('/folders/{folder}', 'FolderController@update')
+        ->where('folder', '[0-9]+')->name('folders.update');
+
+    // Move folder
+    Route::patch('/folders/{folder}/move', 'FolderController@move')
+        ->where('folder', '[0-9]+')->name('folders.move');
+
+    // Change Owner of a folder
+    Route::patch('/folders/{folder}/chown', 'FolderController@changeOwner')
+        ->where('folder', '[0-9]+')->name('folders.chown');
+
+    // Trash folder
+    Route::delete('/folders/{folder}', 'FolderController@trash')
+        ->where('folder', '[0-9]+')->name('folders.trash');
+
+    // Delete folder
+    Route::delete('/folders/{trashedFolder}/force', 'FolderController@delete')
+        ->where('trashedFolder', '[0-9]+')->name('folders.delete');
+
+    // Restore folder
+    Route::post('/folders/{trashedFolder}/restore', 'FolderController@restore')
+        ->where('trashedFolder', '[0-9]+')->name('folders.restore');
+
     /* Files */
 
     // Fetch files
@@ -67,6 +104,14 @@ Route::middleware(['auth:api'])->prefix('v1')->group(function() {
     Route::patch('/files/{file}', 'FileController@update')
         ->where('file', '[0-9]+')->name('files.update');
 
+    // Move file
+    Route::patch('/files/{file}/move', 'FileController@move')
+        ->where('file', '[0-9]+')->name('files.move');
+
+    // Change Owner of a folder
+    Route::patch('/files/{file}/chown', 'FileController@changeOwner')
+        ->where('file', '[0-9]+')->name('files.chown');
+
     // Trash file
     Route::delete('/files/{file}', 'FileController@trash')
         ->where('file', '[0-9]+')->name('files.trash');
@@ -78,29 +123,4 @@ Route::middleware(['auth:api'])->prefix('v1')->group(function() {
     // Restore file
     Route::post('/files/{trashedFile}/restore', 'FileController@restore')
         ->where('trashedFile', '[0-9]+')->name('files.restore');
-
-    /* Files */
-
-    // Fetch directories
-    Route::get('/directories/{directory?}', 'DirectoryController@fetch')
-        ->where('directory', '[0-9]+')->name('directories.fetch');
-
-    // Store directory
-    Route::post('/directories', 'DirectoryController@store')->name('directories.store');
-
-    // Update directory
-    Route::patch('/directories/{directory}', 'DirectoryController@update')
-        ->where('directory', '[0-9]+')->name('directories.update');
-
-    // Trash directory
-    Route::delete('/directories/{directory}', 'DirectoryController@trash')
-        ->where('directory', '[0-9]+')->name('directories.trash');
-
-    // Delete directory
-    Route::delete('/directories/{trashedFile}/force', 'DirectoryController@delete')
-        ->where('trashedFile', '[0-9]+')->name('directories.delete');
-
-    // Restore directory
-    Route::post('/directories/{trashedFile}/restore', 'DirectoryController@restore')
-        ->where('trashedFile', '[0-9]+')->name('directories.restore');
 });

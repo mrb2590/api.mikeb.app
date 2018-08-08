@@ -25,15 +25,15 @@ class CreateFilesTable extends Migration
             $table->string('extension', 6);
             $table->string('mime_type');
             $table->bigInteger('size')->unsigned();
-            $table->integer('directory')->unsigned()->nullable();
-            $table->integer('owned_by')->unsigned();
-            $table->integer('created_by')->unsigned();
+            $table->integer('folder_id')->unsigned()->nullable();
+            $table->integer('owned_by_id')->unsigned();
+            $table->integer('created_by_id')->unsigned();
             $table->softDeletes();
             $table->timestamps();
 
-            $table->foreign('directory')->references('id')->on('directories')->onDelete('cascade');
-            $table->foreign('created_by')->references('id')->on('users')->onDelete('no action');
-            $table->foreign('owned_by')->references('id')->on('users')->onDelete('cascade');
+            $table->foreign('folder_id')->references('id')->on('folders')->onDelete('cascade');
+            $table->foreign('owned_by_id')->references('id')->on('users')->onDelete('no action');
+            $table->foreign('created_by_id')->references('id')->on('users')->onDelete('cascade');
         });
     }
 

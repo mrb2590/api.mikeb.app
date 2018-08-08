@@ -2,7 +2,7 @@
 
 namespace App\Providers;
 
-use App\Directory;
+use App\Folder;
 use App\File;
 use App\User;
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
@@ -36,8 +36,8 @@ class RouteServiceProvider extends ServiceProvider
             return File::onlyTrashed()->find($value);
         });
 
-        Route::bind('trashedDirectory', function ($value) {
-            return Directory::onlyTrashed()->find($value);
+        Route::bind('trashedFolder', function ($value) {
+            return Folder::onlyTrashed()->find($value);
         });
     }
 

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\File;
+use App\Folder;
 use App\Traits\PagingLimit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -37,7 +38,7 @@ class FileController extends Controller
         }
 
         if ($file) {
-            return $file->load('created_by', 'owned_by');
+            return $file;
         }
 
         if ($request->user()->cannot('fetch_all_files')) {
@@ -47,18 +48,23 @@ class FileController extends Controller
         $limit = $this->pagingLimit($request);
 
         $this->validate($request, [
-            'owned_by' => 'nullable|integer|exists:users,id',
-            'created_by' => 'nullable|integer|exists:users,id',
+            'folder_id' => 'nullable|integer|exists:folders,id',
+            'owned_by_id' => 'nullable|integer|exists:users,id',
+            'created_by_id' => 'nullable|integer|exists:users,id',
         ]);
 
-        $files = File::with(['created_by', 'owned_by']);
+        $files = File::select();
 
-        if ($request->has('owned_by')) {
-            $files->where('owned_by', $request->input('owned_by'));
+        if ($request->has('folder_id')) {
+            $files->where('folder_id', $request->input('folder_id'));
         }
 
-        if ($request->has('created_by')) {
-            $files->where('created_by', $request->input('created_by'));
+        if ($request->has('owned_by_id')) {
+            $files->where('owned_by_id', $request->input('owned_by_id'));
+        }
+
+        if ($request->has('created_by_id')) {
+            $files->where('created_by_id', $request->input('created_by_id'));
         }
 
         return $files->paginate($limit);
@@ -78,8 +84,16 @@ class FileController extends Controller
 
         $this->validate($request, [
             'file' => 'required|file|max:20000000',
-            'directory' => 'nullable|integer|exists:directories,id', // To do: make sure user owns dir
+            'folder_id' => 'nullable|integer|exists:folders,id', // To do: make sure user owns dir
         ]);
+
+        if ($request->has('folder_id')) {
+            $folder = Folder::find($request->input('folder_id'));
+
+            if ($request->user()->doesNotOwn($folder)) {
+                abort(403, 'Unauthorized.');
+            }
+        }
 
         $disk = File::$defaultDisk;
 
@@ -103,12 +117,12 @@ class FileController extends Controller
             'extension' => $pathInfo['extension'],
             'mime_type' => $request->file('file')->getMimeType(),
             'size' => Storage::disk($disk)->size($path),
-            'directory' => $request->input('directory'),
-            'owned_by' => $request->user()->id,
-            'created_by' => $request->user()->id,
+            'folder_id' => $request->input('folder_id'),
+            'owned_by_id' => $request->user()->id,
+            'created_by_id' => $request->user()->id,
         ]);
 
-        return $file->load('created_by', 'owned_by');
+        return $file;
     }
 
     /**
@@ -120,7 +134,10 @@ class FileController extends Controller
      */
     public function update(Request $request, File $file)
     {
-        if ($request->user()->cannot('store_files')) {
+        if ($request->user()->cannot('edit_all_files') &&
+            ($request->user()->cannot('edit_files') ||
+            $request->user()->doesNotOwn($file))
+        ) {
             abort(403, 'Unauthorized.');
         }
 
@@ -129,7 +146,74 @@ class FileController extends Controller
         $file->original_filename = $request->input('filename');
         $file->save();
 
-        return $file->load('created_by', 'owned_by');
+        return $file;
+    }
+
+    /**
+     * Move a file.
+     *
+     * @param  \Illuminate\Http\Request $request
+     * @param  \App\File $file
+     * @return \Illuminate\Http\Response
+     */
+    public function move(Request $request, File $file)
+    {
+        if ($request->user()->cannot('edit_files')) {
+            abort(403, 'Unauthorized.');
+        }
+
+        $this->validate($request, [
+            'folder_id' => 'required|integer|exists:folders,id',
+        ]);
+
+        $folder = Folder::find($request->input('folder_id'));
+
+        if ($request->user()->cannot('edit_all_files') &&
+            ($request->user()->doesNotOwn($file) ||
+            $request->user()->doesNotOwn($folder))
+        ) {
+            abort(403, 'Unauthorized.');
+        }
+
+        $file->folder_id = $folder->id;
+
+        if ($file->owned_by->doesNotOwn($folder)) {
+            $file->owned_by_id = $folder->owned_by_id;
+        }
+
+        $file->save();
+
+        return $file->load('owned_by');
+    }
+
+    /**
+     * Change the owner of a file.
+     *
+     * @param  \Illuminate\Http\Request $request
+     * @param  \App\File $file
+     * @return \Illuminate\Http\Response
+     */
+    public function changeOwner(Request $request, File $file)
+    {
+        if ($request->user()->cannot('edit_all_folders')) {
+            abort(403, 'Unauthorized.');
+        }
+
+        $this->validate($request, [
+            'owned_by_id' => 'required|integer|exists:users,id',
+        ]);
+
+        $file->owned_by_id = $request->input('owned_by_id');
+
+        // Remove parent folder if it has a different owner
+        $folder = $file->folder()->first();
+        if ($folder && $file->owned_by->doesNotOwn($folder)) {
+            $file->folder_id = null;
+        }
+
+        $file->save();
+
+        return $file->load('owned_by');
     }
 
     /**

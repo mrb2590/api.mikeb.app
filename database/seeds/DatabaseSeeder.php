@@ -1,6 +1,6 @@
 <?php
 
-use App\Directory;
+use App\Folder;
 use App\File;
 use App\Status;
 use App\User;
@@ -44,8 +44,20 @@ class DatabaseSeeder extends Seeder
             ]));
         });
 
-        // Create 25 random directories
-        factory(Directory::class, 50)->create();
+        // Create 25 random folders
+        factory(Folder::class, 50)->create();
+
+        // Assign some folders to be parents of others
+        Folder::chunk(500, function($folder) use ($faker) {
+            foreach ($folder as $folder) {
+                do {
+                    $randomFolder = Folder::inRandomOrder()->first();
+                } while ($randomFolder->id === $folder->id);
+
+                $folder->parent_id = $faker->randomElement([null, $randomFolder->id]);
+                $folder->save();
+            }
+        });
 
         // Create 50 random files
         factory(File::class, 50)->create();

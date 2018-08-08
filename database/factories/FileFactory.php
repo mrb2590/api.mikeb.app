@@ -1,6 +1,6 @@
 <?php
 
-use App\Directory;
+use App\Folder;
 use App\File;
 use App\User;
 use Faker\Generator as Faker;
@@ -35,8 +35,8 @@ $factory->define(File::class, function(Faker $faker) {
         'extension' => $filePathInfo['extension'],
         'mime_type' => (new UploadedFile($fileAbsPath, $samplePathinfo['basename']))->getMimeType(),
         'size' => Storage::disk($disk)->size($filePath),
-        'directory' => $faker->RandomElement([null, Directory::inRandomOrder()->first()->id]),
-        'owned_by' => $user->id,
-        'created_by' => $user->id,
+        'folder_id' => $faker->RandomElement([null, Folder::inRandomOrder()->first()->id]),
+        'owned_by_id' => $user->id,
+        'created_by_id' => $user->id,
     ];
 });
