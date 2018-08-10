@@ -11,14 +11,6 @@
 |
 */
 
-Auth::routes();
+// Auth::routes();
 
-Route::get('/', 'HomeController@index')->name('index');
-
-
-// Routes require authentication
-Route::middleware(['auth'])->group(function() {
-
-	Route::get('/{user}', 'HomeController@dashboard')->name('dashboard');
-
-});
+Route::get('/{all}', 'WebController@index')->where(['all' => '.*'])->name('app');

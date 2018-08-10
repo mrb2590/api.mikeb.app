@@ -14,9 +14,13 @@ use Illuminate\Http\Request;
 */
 
 // Routes require authentication
-Route::middleware(['auth:api'])->prefix('v1')->group(function() {
+Route::prefix('v1')->group(function() {
+// Route::middleware(['auth:api'])->prefix('v1')->group(function() {
 
     /* Users */
+
+    // Login user
+    Route::post('/user/login', 'Auth\LoginController@loginProxy')->name('user.login');
 
     // Fetch current user
     Route::get('/user', 'UserController@fetch')->name('user.fetch');

@@ -33,17 +33,17 @@ class FileController extends Controller
      */
     public function fetch(Request $request, File $file = null)
     {
-        if ($request->user()->cannot('fetch_files')) {
-            abort(403, 'Unauthorized.');
-        }
+        // if ($request->user()->cannot('fetch_files')) {
+        //     abort(403, 'Unauthorized.');
+        // }
 
         if ($file) {
             return $file;
         }
 
-        if ($request->user()->cannot('fetch_all_files')) {
-            abort(403, 'Unauthorized.');
-        }
+        // if ($request->user()->cannot('fetch_all_files')) {
+        //     abort(403, 'Unauthorized.');
+        // }
 
         $limit = $this->pagingLimit($request);
 
@@ -134,12 +134,12 @@ class FileController extends Controller
      */
     public function update(Request $request, File $file)
     {
-        if ($request->user()->cannot('edit_all_files') &&
-            ($request->user()->cannot('edit_files') ||
-            $request->user()->doesNotOwn($file))
-        ) {
-            abort(403, 'Unauthorized.');
-        }
+        // if ($request->user()->cannot('edit_all_files') &&
+        //     ($request->user()->cannot('edit_files') ||
+        //     $request->user()->doesNotOwn($file))
+        // ) {
+        //     abort(403, 'Unauthorized.');
+        // }
 
         $this->validate($request, ['filename' => 'required|string|max:255']);
 
@@ -158,9 +158,9 @@ class FileController extends Controller
      */
     public function move(Request $request, File $file)
     {
-        if ($request->user()->cannot('edit_files')) {
-            abort(403, 'Unauthorized.');
-        }
+        // if ($request->user()->cannot('edit_files')) {
+        //     abort(403, 'Unauthorized.');
+        // }
 
         $this->validate($request, [
             'folder_id' => 'required|integer|exists:folders,id',
@@ -168,12 +168,12 @@ class FileController extends Controller
 
         $folder = Folder::find($request->input('folder_id'));
 
-        if ($request->user()->cannot('edit_all_files') &&
-            ($request->user()->doesNotOwn($file) ||
-            $request->user()->doesNotOwn($folder))
-        ) {
-            abort(403, 'Unauthorized.');
-        }
+        // if ($request->user()->cannot('edit_all_files') &&
+        //     ($request->user()->doesNotOwn($file) ||
+        //     $request->user()->doesNotOwn($folder))
+        // ) {
+        //     abort(403, 'Unauthorized.');
+        // }
 
         $file->folder_id = $folder->id;
 
@@ -195,9 +195,9 @@ class FileController extends Controller
      */
     public function changeOwner(Request $request, File $file)
     {
-        if ($request->user()->cannot('edit_all_folders')) {
-            abort(403, 'Unauthorized.');
-        }
+        // if ($request->user()->cannot('edit_all_folders')) {
+        //     abort(403, 'Unauthorized.');
+        // }
 
         $this->validate($request, [
             'owned_by_id' => 'required|integer|exists:users,id',
@@ -225,12 +225,12 @@ class FileController extends Controller
      */
     public function trash(Request $request, File $file)
     {
-        if ($request->user()->cannot('remove_all_files') &&
-            ($request->user()->cannot('remove_files') ||
-            $request->user()->doesNotOwn($file))
-        ) {
-            abort(403, 'Unauthorized.');
-        }
+        // if ($request->user()->cannot('remove_all_files') &&
+        //     ($request->user()->cannot('remove_files') ||
+        //     $request->user()->doesNotOwn($file))
+        // ) {
+        //     abort(403, 'Unauthorized.');
+        // }
 
         $file->delete();
 
@@ -246,12 +246,12 @@ class FileController extends Controller
      */
     public function delete(Request $request, File $trashedFile)
     {
-        if ($request->user()->cannot('remove_all_files') &&
-            ($request->user()->cannot('remove_files') ||
-            $request->user()->doesNotOwn($trashedFile))
-        ) {
-            abort(403, 'Unauthorized.');
-        }
+        // if ($request->user()->cannot('remove_all_files') &&
+        //     ($request->user()->cannot('remove_files') ||
+        //     $request->user()->doesNotOwn($trashedFile))
+        // ) {
+        //     abort(403, 'Unauthorized.');
+        // }
 
         Storage::disk(File::$defaultDisk)->delete($trashedFile->path);
 
@@ -269,12 +269,12 @@ class FileController extends Controller
      */
     public function restore(Request $request, File $trashedFile)
     {
-        if ($request->user()->cannot('remove_all_files') &&
-            ($request->user()->cannot('remove_files') ||
-            $request->user()->doesNotOwn($trashedFile))
-        ) {
-            abort(403, 'Unauthorized.');
-        }
+        // if ($request->user()->cannot('remove_all_files') &&
+        //     ($request->user()->cannot('remove_files') ||
+        //     $request->user()->doesNotOwn($trashedFile))
+        // ) {
+        //     abort(403, 'Unauthorized.');
+        // }
 
         $trashedFile->restore();
 

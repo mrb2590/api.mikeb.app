@@ -99,4 +99,23 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Passport Credentials
+    |--------------------------------------------------------------------------
+    |
+    | 
+    */
+
+    'oauth' => [
+        'personal' => [
+            'client_id' => env('PERSONAL_CLIENT_ID'),
+            'client_secret' => env('PERSONAL_CLIENT_SECRET'),
+        ],
+        'password' => [
+            'client_id' => env('PASSWORD_CLIENT_ID'),
+            'client_secret' => env('PASSWORD_CLIENT_SECRET'),
+        ],
+    ],
+
 ];

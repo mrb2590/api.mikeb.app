@@ -4,11 +4,29 @@
 // Variables
 @import "variables";
 
-// Bootstrap
-@import "~bootstrap-sass/assets/stylesheets/bootstrap";
+// Vue Material Theme
+@import "~material-design-icons/iconfont/material-icons.css";
+@import '~vue-material/dist/vue-material.min.css';
+@import "~vue-material/dist/theme/engine"; // Import the theme engine
 
-// Font-awesome
-@import "~font-awesome/scss/font-awesome.scss";
+// Default theme
+@include md-register-theme("default", (
+    primary: md-get-palette-color(blue, A200), // The primary color of your application
+    accent: md-get-palette-color(red, A200) // The accent or secondary color
+));
+
+// Dark theme
+@include md-register-theme("dark", (
+    primary: md-get-palette-color(blue, A200), // The primary color of your application
+    accent: md-get-palette-color(red, A200), // The accent or secondary color
+    theme: dark
+));
+
+// Import themes
+@import "~vue-material/dist/theme/all"; // Apply the theme
 
 // Theme
 @import "theme";
+
+// File component
+@import "file";

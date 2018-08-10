@@ -15,7 +15,7 @@ mix.webpackConfig({})
 	.js('resources/assets/js/app.js', 'public/js')
 	.sass('resources/assets/sass/app.scss', 'public/css')
 	.extract([
-		'jquery', 'bootstrap-sass', 'toastr',
+		'jquery', 'bootstrap-sass', 'vue-material/dist/components',
 	])
 	.autoload({
 		jquery: ['$', 'window.jQuery', 'jQuery', 'jquery'],
