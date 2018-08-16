@@ -52,7 +52,7 @@ return [
     |
     */
 
-    'url' => env('APP_URL', 'https://files.mikeb.app'),
+    'url' => env('APP_URL', 'https://api.mikeb.app'),
 
     /*
     |--------------------------------------------------------------------------
