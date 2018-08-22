@@ -14,8 +14,8 @@ return [
    
     'supportsCredentials' => false,
     'allowedOrigins' => [
-        'dev.files.mikeb.app',
-        'files.mikeb.app',
+        'https://dev.mikeb.app',
+        'https://mikeb.app',
     ],
     'allowedOriginsPatterns' => [],
     'allowedHeaders' => ['*'],
