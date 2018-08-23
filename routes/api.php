@@ -14,8 +14,7 @@ use Illuminate\Http\Request;
 */
 
 // Routes require authentication
-Route::prefix('v1')->group(function() {
-// Route::middleware(['auth:api'])->prefix('v1')->group(function() {
+Route::middleware(['auth:api'])->prefix('v1')->group(function() {
 
     /* Users */
 
