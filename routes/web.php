@@ -10,7 +10,3 @@
 | contains the "web" middleware group. Now create something great!
 |
 */
-
-// Auth::routes();
-
-Route::get('/{all}', 'WebController@index')->where(['all' => '.*'])->name('app');
