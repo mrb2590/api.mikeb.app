@@ -30,7 +30,7 @@ class AuthServiceProvider extends ServiceProvider
 
         Passport::routes();
 
-        Passport::tokensExpireIn(now()->addDays(1));
+        Passport::tokensExpireIn(now()->addHours(2));
 
         // Revoke token if unused for six months
         Passport::refreshTokensExpireIn(now()->addMonths(6));

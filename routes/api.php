@@ -100,6 +100,10 @@ Route::middleware(['auth:api'])->prefix('v1')->group(function() {
     Route::get('/files/{file?}', 'FileController@fetch')
         ->where('file', '[0-9]+')->name('files.fetch');
 
+    // Download file
+    Route::get('/files/{file}/download', 'FileController@download')
+        ->where('file', '[0-9]+')->name('files.download');
+
     // Store file
     Route::post('/files', 'FileController@store')->name('files.store');
 
