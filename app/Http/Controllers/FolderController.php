@@ -73,7 +73,7 @@ class FolderController extends Controller
     }
 
     /**
-     * Fetch folder with filesr.
+     * Fetch folder with files.
      *
      * @param  \Illuminate\Http\Request $request
      * @param  \App\Folder $folder
@@ -93,13 +93,111 @@ class FolderController extends Controller
         $limit = $this->pagingLimit($request);
 
         $this->validate($request, [
-            'parent_id' => 'nullable|integer|exists:folders,id',
-            'owned_by_id' => 'nullable|integer|exists:users,id',
-            'created_by_id' => 'nullable|integer|exists:users,id',
-            'as_tree' => 'nullable|boolean',
+            'recursive' => 'nullable|boolean',
         ]);
 
-        return $folder->files()->paginate($limit);
+        if ($request->input('recursive') == true) {
+            $folder->load('all_children_files');
+
+            return $folder;
+        }
+
+        return $folder->paginate($limit);
+    }
+
+    /**
+     * Download folder as zip.
+     *
+     * @param  \Illuminate\Http\Request $request
+     * @param  \App\Folder $folder
+     * @return \Illuminate\Http\Response
+     */
+    public function download(Request $request, Folder $folder)
+    {
+        if ($request->user()->cannot('fetch_all_folders') &&
+            ($request->user()->cannot('fetch_folders') ||
+            $request->user()->doesNotOwn($folder))
+        ) {
+            abort(403, 'Unauthorized.');
+        }
+
+        $this->validate($request, ['encoded' => 'nullable|boolean']);
+
+        $zip = new \ZipArchive;
+        $filename = 'temp'.time().'.zip';
+        $zipPath = storage_path('app/temp/'.$filename);
+
+        if ($zip->open($zipPath, \ZipArchive::CREATE) !== true) {
+            abort(500, 'Failed to create zip.');
+        }
+
+        $fullPath = ''; // The full for each file
+        $idPath = ''; // The full path for each file using the folder ids instead
+        $folderBeforeId = ''; // The id of the previsouly traversed folder
+
+        $folder->traverseAllFiles(function($file) use (
+            &$zip, &$fullPath, &$idPath, &$folderBeforeId
+        ) {
+            if ($file instanceof Folder) {
+                if (is_null($file->parent_id)) {
+                    $fullPath = $file->name.'/';
+                    $idPath = $file->id.'/';
+                } elseif ($file->parent_id == $folderBeforeId) {
+                    $fullPath .= $file->name.'/';
+                    $idPath .= $file->id.'/';
+                } else {
+                    $ids = explode('/', $idPath);
+
+                    foreach ($ids as $idIndex => $idFromPath) {
+                        if ($file->parent_id == $idFromPath) {
+                            $folders = explode('/', $fullPath);
+                            $fullPath = '';
+
+                            foreach ($folders as $pathIndex => $folderFromPath) {
+                                $fullPath .= $folderFromPath.'/';
+
+                                if ($idIndex == $pathIndex) {
+                                    break;
+                                }
+                            }
+
+                            break;
+                        }
+                    }
+                }
+
+                $zip->addEmptyDir($fullPath);
+
+                $folderBeforeId = $file->id;
+            } else {
+                $zip->addFile(
+                    storage_path('app/'.$file->disk.'/'.$file->path),
+                    $fullPath.$file->original_filename.'.'.$file->extension
+                );
+            }
+
+            // if ($file instanceof Folder) {
+            //     $fullPath .= $file->name.'/';
+            //     $zip->addEmptyDir($fullPath);
+            // } else {
+            //     $zip->addFile(
+            //         storage_path('app/'.$file->disk.'/'.$file->path),
+            //         $fullPath.$file->original_filename.'.'.$file->extension
+            //     );
+            // }
+        });
+
+        if ($zip->close() !== true) {
+            abort(500, 'Failed to save zip.');
+        }
+
+        if ($request->input('encoded')) {
+            return [
+                'file' => base64_encode($zipPath)
+            ];
+        }
+
+        return response()->download($zipPath, $folder->name.'.zip')->deleteFileAfterSend(true);
     }
 
     /**

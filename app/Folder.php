@@ -77,11 +77,11 @@ class Folder extends Model
     }
 
     /**
-     * Recursively get all child folders and files.
+     * Recursively get all child folders.
      */
     public function all_children_files()
     {
-        return $this->children()->with(['all_children', 'files']);
+        return $this->load('files')->children()->with('all_children_files', 'files');
     }
 
     /**
@@ -106,5 +106,23 @@ class Folder extends Model
     public function created_by()
     {
         return $this->belongsTo(User::class, 'created_by_id')->publicInfo();
+    }
+
+    /**
+     * Recursively traverse all folders and files within this folder.
+     */
+    public function traverseAllFiles(\Closure $closure)
+    {
+        $closure($this);
+
+        foreach ($this->files as $file) {
+            $closure($file);
+        }
+
+        foreach ($this->children as $folder) {
+            $closure($folder);
+
+            $folder->traverseAllFiles($closure);
+        }
     }
 }

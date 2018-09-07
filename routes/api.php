@@ -67,6 +67,10 @@ Route::middleware(['auth:api'])->prefix('v1')->group(function() {
     Route::get('/folders/{folder}/files', 'FolderController@fetchFiles')
         ->where('folder', '[0-9]+')->name('folders.files.fetch');
 
+    // Download folder as zip
+    Route::get('/folders/{folder}/download', 'FolderController@download')
+        ->where('folder', '[0-9]+')->name('folders.download');
+
     // Store folder
     Route::post('/folders', 'FolderController@store')->name('folders.store');
 
