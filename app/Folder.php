@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Folder extends Model
 {
-    use HasChildren, SoftDeletes;
+    use SoftDeletes;
 
     /**
      * The attributes that should be mutated to dates.
@@ -120,9 +120,65 @@ class Folder extends Model
         }
 
         foreach ($this->children as $folder) {
-            $closure($folder);
-
             $folder->traverseAllFiles($closure);
         }
+    }
+
+    /**
+     * Move this folder to another or to the root.
+     */
+    public function move($newParentFolder = null, $newOwner = null)
+    {
+        $parent = null;
+
+        if ($newParentFolder) {
+            $parent = Folder::find($newParentFolder->id);
+        }
+
+        if ($parent) {
+            if ($parent->id == $this->id) {
+                throw new \Exception('Cannot move folder to itself.');
+            }
+
+            $this->parent_id = $parent->id;
+        } else {
+            $this->parent_id = null;
+        }
+
+        $this->save();
+
+        if (!$parent && !$newOwner) {
+            throw new \Exception('Must pass new owner if moving to root.');
+        }
+
+        $newOwnerId = $parent ? $parent->owned_by_id : $newOwner->id;
+
+        if ($this->owned_by_id !== $newOwnerId) {
+            $this->traverseAllFiles(function($file) use ($newOwnerId) {
+                $file->owned_by_id = $newOwnerId;
+                $file->save();
+            });
+        }
+
+        return true;
+    }
+
+    /**
+     * Get the path of the folder
+     *
+     * @return string
+     */
+    public function getPath()
+    {
+        $parent = $this->parent;
+
+        $path = $this->name.'/';
+
+        while ($parent) {
+            $path = $parent->name.'/'.$path;
+            $parent = $parent->parent;
+        }
+
+        return $path;
     }
 }

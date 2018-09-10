@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Folder;
 use App\File;
+use App\Folder;
 use App\Traits\PagingLimit;
+use App\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class FolderController extends Controller
 {
@@ -38,34 +40,42 @@ class FolderController extends Controller
             return $folder;
         }
 
-        if ($request->user()->cannot('fetch_all_folders')) {
-            abort(403, 'Unauthorized.');
-        }
-
         $limit = $this->pagingLimit($request);
 
         $this->validate($request, [
-            'parent_id' => 'nullable|integer|exists:folders,id',
+            'parent_id' => 'nullable|integer',
             'owned_by_id' => 'nullable|integer|exists:users,id',
             'created_by_id' => 'nullable|integer|exists:users,id',
-            'as_tree' => 'nullable|boolean',
+            'recursive' => 'nullable|boolean',
         ]);
 
         $folders = Folder::select();
 
         if ($request->has('parent_id')) {
-            $folders->where('parent_id', $request->input('parent_id'));
+            if ($request->input('parent_id') == 0) {
+                $folders->whereNull('parent_id');
+            } else {
+                $folders->where('parent_id', $request->input('parent_id'));
+            }
         }
 
         if ($request->has('owned_by_id')) {
+            if ($request->user()->cannot('fetch_all_folders') &&
+                $request->user()->id != $folder->owned_by_id
+            ) {
+                abort(403, 'Unauthorized.');
+            }
+
             $folders->where('owned_by_id', $request->input('owned_by_id'));
+        } else {
+            $folders->where('owned_by_id', $request->user()->id);
         }
 
         if ($request->has('created_by_id')) {
             $folders->where('created_by_id', $request->input('created_by_id'));
         }
 
-        if ($request->has('as_tree') && $request->input('as_tree')) {
+        if ($request->has('recursive') && $request->input('recursive')) {
             return $folders->whereNull('parent_id')->with('all_children')->paginate($limit);
         }
 
@@ -131,60 +141,17 @@ class FolderController extends Controller
             abort(500, 'Failed to create zip.');
         }
 
-        $fullPath = ''; // The full for each file
-        $idPath = ''; // The full path for each file using the folder ids instead
-        $folderBeforeId = ''; // The id of the previsouly traversed folder
+        $folder->traverseAllFiles(function($file) use (&$zip) {
+            $fullPath = $file->getPath();
 
-        $folder->traverseAllFiles(function($file) use (
-            &$zip, &$fullPath, &$idPath, &$folderBeforeId
-        ) {
-            if ($file instanceof Folder) {
-                if (is_null($file->parent_id)) {
-                    $fullPath = $file->name.'/';
-                    $idPath = $file->id.'/';
-                } elseif ($file->parent_id == $folderBeforeId) {
-                    $fullPath .= $file->name.'/';
-                    $idPath .= $file->id.'/';
-                } else {
-                    $ids = explode('/', $idPath);
-
-                    foreach ($ids as $idIndex => $idFromPath) {
-                        if ($file->parent_id == $idFromPath) {
-                            $folders = explode('/', $fullPath);
-                            $fullPath = '';
-
-                            foreach ($folders as $pathIndex => $folderFromPath) {
-                                $fullPath .= $folderFromPath.'/';
-
-                                if ($idIndex == $pathIndex) {
-                                    break;
-                                }
-                            }
-
-                            break;
-                        }
-                    }
-                }
-
-                $zip->addEmptyDir($fullPath);
-
-                $folderBeforeId = $file->id;
-            } else {
+            if ($file instanceof File) {
                 $zip->addFile(
                     storage_path('app/'.$file->disk.'/'.$file->path),
-                    $fullPath.$file->original_filename.'.'.$file->extension
+                    $fullPath
                 );
+            } else {
+                $zip->addEmptyDir($fullPath);
             }
-
-            // if ($file instanceof Folder) {
-            //     $fullPath .= $file->name.'/';
-            //     $zip->addEmptyDir($fullPath);
-            // } else {
-            //     $zip->addFile(
-            //         storage_path('app/'.$file->disk.'/'.$file->path),
-            //         $fullPath.$file->original_filename.'.'.$file->extension
-            //     );
-            // }
         });
 
         if ($zip->close() !== true) {
@@ -193,7 +160,8 @@ class FolderController extends Controller
 
         if ($request->input('encoded')) {
             return [
-                'file' => base64_encode($zipPath)
+                'filename' => $folder->name.'.zip',
+                'file' => base64_encode(Storage::disk('temp')->get($filename)),
             ];
         }
 
@@ -266,35 +234,27 @@ class FolderController extends Controller
         }
 
         $this->validate($request, [
-            'parent_id' => 'required|integer|exists:folders,id',
+            'parent_id' => 'nullable|integer|exists:folders,id',
+            'owned_by_id' => 'nullable|integer|required_without:parent_id|exists:users,id',
         ]);
 
-        $parent = Folder::find($request->input('parent_id'));
+        $parent = null;
+        $newOwner = null;
+
+        if ($request->input('parent_id')) {
+            $parent = Folder::find($request->input('parent_id'));
+        } else {
+            $newOwner = User::find($request->input('owned_by_id'));
+        }
 
         if ($request->user()->cannot('edit_all_folders') &&
             ($request->user()->doesNotOwn($folder) ||
-            $request->user()->doesNotOwn($parnet))
+            ($parent && $request->user()->doesNotOwn($parnet)))
         ) {
             abort(403, 'Unauthorized.');
         }
 
-        if ($parent->id === $folder->id) {
-            abort(400, 'The folder cannot be its own parent.');
-        }
-
-        $folder->parent_id = $parent->id;
-
-        if ($folder->owned_by_id != $parent->owned_by_id) {
-            $folder->owned_by_id = $parent->owned_by_id;
-
-            // Recursively replace owner of all children
-            Folder::loopAllChildren($folder, function($child) use ($parent) {
-                $child->owned_by_id = $parent->owned_by_id;
-                $child->save();
-            });
-        }
-
-        $folder->save();
+        $folder->move($parent, $newOwner);
 
         return $folder->load('owned_by');
     }
@@ -319,13 +279,14 @@ class FolderController extends Controller
         $folder->owned_by_id = $request->input('owned_by_id');
 
         // Recursively replace owner of all children
-        Folder::loopAllChildren($folder, function($child) use ($request) {
-            $child->owned_by_id = $request->input('owned_by_id');
-            $child->save();
+        $folder->traverseAllFiles(function($file) use ($request) {
+            $file->owned_by_id = $request->input('owned_by_id');
+            $file->save();
         });
 
         // Remove parent folder if it has a different owner
         $parent = $folder->parent()->first();
+
         if ($parent && $parent->owned_by_id !== $folder->owned_by_id) {
             $folder->parent_id = null;
         }

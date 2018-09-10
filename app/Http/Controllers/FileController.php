@@ -44,7 +44,7 @@ class FileController extends Controller
         $limit = $this->pagingLimit($request);
 
         $this->validate($request, [
-            'folder_id' => 'nullable|integer|exists:folders,id',
+            'folder_id' => 'nullable|integer',
             'owned_by_id' => 'nullable|integer|exists:users,id',
             'created_by_id' => 'nullable|integer|exists:users,id',
         ]);
@@ -52,21 +52,27 @@ class FileController extends Controller
         $files = File::select();
 
         if ($request->has('folder_id')) {
-            $files->where('folder_id', $request->input('folder_id'));
+            if ($request->input('folder_id') == 0) {
+                $files->whereNull('folder_id');
+            } else {
+                $files->where('folder_id', $request->input('folder_id'));
+            }
         }
 
         if ($request->has('created_by_id')) {
             $files->where('created_by_id', $request->input('created_by_id'));
         }
 
-        if ($request->user()->cannot('fetch_all_files')) {
-            if ($request->has('owned_by_id')) {
+        if ($request->has('owned_by_id')) {
+            if ($request->user()->cannot('fetch_all_files') &&
+                $request->user()->id != $file->owned_by_id
+            ) {
                 abort(403, 'Unauthorized.');
             }
 
-            $files->where('owned_by_id', $request->user()->id);
-        } elseif ($request->has('owned_by_id')) {
             $files->where('owned_by_id', $request->input('owned_by_id'));
+        } else {
+            $files->where('owned_by_id', $request->user()->id);
         }
 
         return $files->paginate($limit);
@@ -92,6 +98,7 @@ class FileController extends Controller
 
         if ($request->input('encoded')) {
             return [
+                'filename' => $file->original_filename.$file->extension,
                 'file' => base64_encode(Storage::disk($file->disk)->get($file->path))
             ];
         }

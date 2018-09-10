@@ -119,4 +119,16 @@ class File extends Model
     {
         return $this->belongsTo(User::class, 'created_by_id')->publicInfo();
     }
+
+    /**
+     * Get the path of the file
+     *
+     * @return string
+     */
+    public function getPath()
+    {
+        $filename = $this->original_filename.'.'.$this->extension;
+
+        return $this->folder->getPath().$filename;
+    }
 }
