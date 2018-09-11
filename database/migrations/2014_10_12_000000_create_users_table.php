@@ -24,8 +24,8 @@ class CreateUsersTable extends Migration
             $table->string('slug');
             $table->string('password');
             $table->char('api_token', 60);
-            $table->integer('status_id')->unsigned();
             $table->rememberToken();
+            $table->integer('status_id')->unsigned();
             $table->softDeletes();
             $table->timestamps();
 

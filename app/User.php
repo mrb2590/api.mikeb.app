@@ -21,12 +21,22 @@ class User extends Authenticatable
     protected $dates = ['deleted_at'];
 
     /**
+     * The attributes that should be cast to native types.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'status_id' => 'integer',
+        'folder_id' => 'integer',
+    ];
+
+    /**
      * The attributes that are mass assignable.
      *
      * @var array
      */
     protected $fillable = [
-        'first_name', 'last_name', 'email', 'slug', 'password', 'api_token', 'status_id',
+        'first_name', 'last_name', 'email', 'password',
     ];
 
     /**
@@ -80,5 +90,13 @@ class User extends Authenticatable
     public function files()
     {
         return $this->hasMany(File::class, 'uploaded_by');
+    }
+
+    /**
+     * Get the user's folder.
+     */
+    public function folder()
+    {
+        return $this->belongsTo(Folder::class);
     }
 }

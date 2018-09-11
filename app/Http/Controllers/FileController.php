@@ -44,19 +44,23 @@ class FileController extends Controller
         $limit = $this->pagingLimit($request);
 
         $this->validate($request, [
-            'folder_id' => 'nullable|integer',
+            'parent_id' => 'nullable|integer|exists:folders,id',
             'owned_by_id' => 'nullable|integer|exists:users,id',
             'created_by_id' => 'nullable|integer|exists:users,id',
         ]);
 
         $files = File::select();
 
-        if ($request->has('folder_id')) {
-            if ($request->input('folder_id') == 0) {
-                $files->whereNull('folder_id');
-            } else {
-                $files->where('folder_id', $request->input('folder_id'));
+        if ($request->has('parent_id')) {
+            $parentFolder = Folder::findOrFail($request->input('parent_id'));
+
+            if ($request->user()->doesNotOwn($parentFolder) &&
+                $request->user()->cannot('fetch_all_files')
+            ) {
+                abort(403, 'Unauthorized.');
             }
+
+            $files->where('parent_id', $request->input('parent_id'));
         }
 
         if ($request->has('created_by_id')) {
@@ -98,14 +102,14 @@ class FileController extends Controller
 
         if ($request->input('encoded')) {
             return [
-                'filename' => $file->original_filename.$file->extension,
+                'filename' => $file->display_filename.$file->extension,
                 'file' => base64_encode(Storage::disk($file->disk)->get($file->path))
             ];
         }
 
         return response()->download(
             storage_path('app/'.$file->disk.'/'.$file->path),
-            $file->original_filename.'.'.$file->extension
+            $file->display_filename.'.'.$file->extension
         );
     }
 
@@ -123,11 +127,11 @@ class FileController extends Controller
 
         $this->validate($request, [
             'file' => 'required|file|max:20000000',
-            'folder_id' => 'nullable|integer|exists:folders,id', // To do: make sure user owns dir
+            'parent_id' => 'nullable|integer|exists:folders,id', // To do: make sure user owns dir
         ]);
 
-        if ($request->has('folder_id')) {
-            $folder = Folder::find($request->input('folder_id'));
+        if ($request->has('parent_id')) {
+            $folder = Folder::find($request->input('parent_id'));
 
             if ($request->user()->doesNotOwn($folder)) {
                 abort(403, 'Unauthorized.');
@@ -148,7 +152,7 @@ class FileController extends Controller
         $pathInfo = pathinfo($path);
 
         $file = File::create([
-            'original_filename' => $originalFilename,
+            'display_filename' => $originalFilename,
             'basename' => $pathInfo['basename'],
             'disk' => $disk,
             'path' => $path,
@@ -156,7 +160,7 @@ class FileController extends Controller
             'extension' => $pathInfo['extension'],
             'mime_type' => $request->file('file')->getMimeType(),
             'size' => Storage::disk($disk)->size($path),
-            'folder_id' => $request->input('folder_id'),
+            'parent_id' => $request->input('parent_id'),
             'owned_by_id' => $request->user()->id,
             'created_by_id' => $request->user()->id,
         ]);
@@ -182,7 +186,7 @@ class FileController extends Controller
 
         $this->validate($request, ['filename' => 'required|string|max:255']);
 
-        $file->original_filename = $request->input('filename');
+        $file->display_filename = $request->input('filename');
         $file->save();
 
         return $file;
@@ -202,19 +206,24 @@ class FileController extends Controller
         }
 
         $this->validate($request, [
-            'folder_id' => 'required|integer|exists:folders,id',
+            'parent_id' => 'nullable|integer|exists:folders,id',
         ]);
 
-        $folder = Folder::find($request->input('folder_id'));
+        if ($request->filled('parent_id')) {
+            $folder = Folder::find($request->input('parent_id'));
 
-        if ($request->user()->cannot('edit_all_files') &&
-            ($request->user()->doesNotOwn($file) ||
-            $request->user()->doesNotOwn($folder))
-        ) {
-            abort(403, 'Unauthorized.');
+            if ($request->user()->cannot('edit_all_files') &&
+                ($request->user()->doesNotOwn($file) ||
+                $request->user()->doesNotOwn($folder))
+            ) {
+                abort(403, 'Unauthorized.');
+            }
+
+            $file->parent_id = $folder->id;
+        } else {
+            $file->parent_id = $request->user()->folder_id;
+            $folder = $request->user()->folder;
         }
-
-        $file->folder_id = $folder->id;
 
         if ($file->owned_by->doesNotOwn($folder)) {
             $file->owned_by_id = $folder->owned_by_id;
@@ -247,7 +256,7 @@ class FileController extends Controller
         // Remove parent folder if it has a different owner
         $folder = $file->folder()->first();
         if ($folder && $file->owned_by->doesNotOwn($folder)) {
-            $file->folder_id = null;
+            $file->parent_id = null;
         }
 
         $file->save();

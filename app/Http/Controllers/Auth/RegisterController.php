@@ -63,17 +63,32 @@ class RegisterController extends Controller
      */
     protected function create(array $data)
     {
-        $user = User::create([
-            'first_name' => $data['first_name'],
-            'last_name' => $data['last_name'],
-            'email' => $data['email'],
-            'slug' => str_slug(explode('@', $data['email'])[0], '-'),
-            'password' => bcrypt($data['password']),
-            'api_token' => str_random(60),
-            'status_id' => Status::where('name', 'good')->where('type', 'user')->first()->id,
-        ]);
+        $user = new User;
+
+        $user->first_name = $data['first_name'];
+        $user->last_name = $data['last_name'];
+        $user->email = $data['email'];
+        $user->slug = str_slug(explode('@', $data['email'])[0], '-');
+        $user->password = bcrypt($data['password']);
+        $user->api_token = str_random(60);
+        $user->status_id = Status::where('name', 'good')->where('type', 'user')->first()->id;
+
+        $user->save();
 
         $user->assignRole('member');
+
+        // Create user's root folder
+        $folder = new Folder;
+        $folder->name = $user->slug;
+        $folder->disk = 'private';
+        $folder->owned_by_id = $user->id;
+        $folder->created_by_id = $user->id;
+
+        $folder->save();
+
+        $user->folder_id = $folder->id;
+
+        $user->save();
 
         return $user;
     }

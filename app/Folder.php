@@ -33,9 +33,7 @@ class Folder extends Model
      *
      * @var array
      */
-    protected $fillable = [
-        'name', 'disk', 'parent_id', 'owned_by_id', 'created_by_id',
-    ];
+    protected $fillable = ['name'];
 
     /**
      * The relationships to always load.
@@ -89,7 +87,7 @@ class Folder extends Model
      */
     public function files()
     {
-        return $this->hasMany(File::class, 'folder_id', 'id');
+        return $this->hasMany(File::class, 'parent_id', 'id');
     }
 
     /**

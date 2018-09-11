@@ -37,7 +37,7 @@ class File extends Model
      */
     protected $casts = [
         'size' => 'integer',
-        'folder_id' => 'integer',
+        'parent_id' => 'integer',
         'owned_by_id' => 'integer',
         'created_by_id' => 'integer',
     ];
@@ -47,10 +47,7 @@ class File extends Model
      *
      * @var array
      */
-    protected $fillable = [
-        'original_filename', 'basename', 'filename', 'extension', 'mime_type', 'path', 'size',
-        'disk', 'folder_id', 'owned_by_id', 'created_by_id',
-    ];
+    protected $fillable = ['display_filename', 'extension'];
 
     /**
      * The accessors to append to the model's array form.
@@ -101,7 +98,7 @@ class File extends Model
      */
     public function folder()
     {
-        return $this->belongsTo(Folder::class, 'folder_id');
+        return $this->belongsTo(Folder::class, 'parent_id');
     }
 
     /**
@@ -127,7 +124,7 @@ class File extends Model
      */
     public function getPath()
     {
-        $filename = $this->original_filename.'.'.$this->extension;
+        $filename = $this->display_filename.'.'.$this->extension;
 
         return $this->folder->getPath().$filename;
     }

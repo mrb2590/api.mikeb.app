@@ -73,15 +73,30 @@ class UserController extends Controller
             'role' => 'required|string|exists:roles,name',
         ]);
 
-        $user = User::create([
-            'first_name' => $request->input('first_name'),
-            'last_name' => $request->input('last_name'),
-            'email' => $request->input('email'),
-            'slug' => str_slug(explode('@', $request->input('email'))[0], '-'),
-            'password' => bcrypt($request->input('password')),
-            'api_token' => str_random(60),
-            'status_id' => Status::where('name', 'good')->where('type', 'user')->first()->id,
-        ]);
+        $user = new User;
+
+        $user->first_name = $request->input('first_name');
+        $user->last_name = $request->input('last_name');
+        $user->email = $request->input('email');
+        $user->slug = str_slug(explode('@', $request->input('email'))[0], '-');
+        $user->password = bcrypt($request->input('password'));
+        $user->api_token = str_random(60);
+        $user->status_id = Status::where('name', 'good')->where('type', 'user')->first()->id;
+
+        $user->save();
+
+        // Create user's root folder
+        $folder = new Folder;
+        $folder->name = $user->slug;
+        $folder->disk = 'private';
+        $folder->owned_by_id = $user->id;
+        $folder->created_by_id = $user->id;
+
+        $folder->save();
+
+        $user->folder_id = $folder->id;
+
+        $user->save();
 
         $user->assignRole($request->input('role'));
 
@@ -125,6 +140,9 @@ class UserController extends Controller
 
         if ($request->has('email')) {
             $data['slug'] = str_slug(explode('@', $data['email'])[0], '-');
+
+            $user->folder->name = $data['slug'];
+            $user->folder->save();
         }
 
         $user->fill($data)->save();

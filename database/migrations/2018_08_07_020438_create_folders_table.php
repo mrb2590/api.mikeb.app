@@ -27,6 +27,12 @@ class CreateFoldersTable extends Migration
             $table->foreign('owned_by_id')->references('id')->on('users')->onDelete('no action');
             $table->foreign('created_by_id')->references('id')->on('users')->onDelete('cascade');
         });
+
+        Schema::table('users', function (Blueprint $table) {
+            $table->integer('folder_id')->unsigned()->nullable()->after('status_id');
+
+            $table->foreign('folder_id')->references('id')->on('folders');
+        });
     }
 
     /**
@@ -36,6 +42,12 @@ class CreateFoldersTable extends Migration
      */
     public function down()
     {
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropForeign('users_folder_id_foreign');
+
+            $table->dropColumn('folder_id');
+        });
+
         Schema::dropIfExists('folders');
     }
 }

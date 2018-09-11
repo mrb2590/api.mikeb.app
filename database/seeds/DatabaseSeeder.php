@@ -42,10 +42,22 @@ class DatabaseSeeder extends Seeder
             $user->assignRole($faker->randomElement([
                 'admin', 'member', 'viewer'
             ]));
+
+            // Create user's root folder
+            $folder = new Folder;
+            $folder->name = $user->slug;
+            $folder->disk = 'private';
+            $folder->owned_by_id = $user->id;
+            $folder->created_by_id = $user->id;
+
+            $folder->save();
         });
 
         // Create 25 random folders
         factory(Folder::class, 50)->create();
+
+        $user->folder_id = 1;
+        $user->save();
 
         // Assign some folders to be parents of others
         Folder::chunk(500, function($folder) use ($faker) {

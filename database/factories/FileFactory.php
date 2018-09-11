@@ -27,7 +27,7 @@ $factory->define(File::class, function(Faker $faker) {
     $filePathInfo = pathinfo($filePath);
 
     return [
-        'original_filename' => $sampleFilename,
+        'display_filename' => $sampleFilename,
         'basename' => $filePathInfo['basename'],
         'disk' => $disk,
         'path' => $filePath,
@@ -35,7 +35,7 @@ $factory->define(File::class, function(Faker $faker) {
         'extension' => $filePathInfo['extension'],
         'mime_type' => (new UploadedFile($fileAbsPath, $samplePathinfo['basename']))->getMimeType(),
         'size' => Storage::disk($disk)->size($filePath),
-        'folder_id' => $faker->RandomElement([null, Folder::inRandomOrder()->first()->id]),
+        'parent_id' => $faker->RandomElement([null, Folder::inRandomOrder()->first()->id]),
         'owned_by_id' => $user->id,
         'created_by_id' => $user->id,
     ];

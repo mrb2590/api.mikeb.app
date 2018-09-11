@@ -43,19 +43,26 @@ class FolderController extends Controller
         $limit = $this->pagingLimit($request);
 
         $this->validate($request, [
-            'parent_id' => 'nullable|integer',
+            'parent_id' => 'nullable|integer|exists:users,id',
             'owned_by_id' => 'nullable|integer|exists:users,id',
             'created_by_id' => 'nullable|integer|exists:users,id',
-            'recursive' => 'nullable|boolean',
         ]);
 
         $folders = Folder::select();
 
         if ($request->has('parent_id')) {
-            if ($request->input('parent_id') == 0) {
-                $folders->whereNull('parent_id');
-            } else {
-                $folders->where('parent_id', $request->input('parent_id'));
+            $parentFolder = Folder::findOrFail($request->input('parent_id'));
+
+            if ($request->user()->doesNotOwn($parentFolder) &&
+                $request->user()->cannot('fetch_all_folders')
+            ) {
+                abort(403, 'Unauthorized.');
+            }
+
+            $folders->where('parent_id', $request->input('parent_id'));
+        } else {
+            if ($request->user()->cannot('fetch_all_folders')) {
+                $folders->where('parent_id', $request->user()->folder_id);
             }
         }
 
@@ -73,10 +80,6 @@ class FolderController extends Controller
 
         if ($request->has('created_by_id')) {
             $folders->where('created_by_id', $request->input('created_by_id'));
-        }
-
-        if ($request->has('recursive') && $request->input('recursive')) {
-            return $folders->whereNull('parent_id')->with('all_children')->paginate($limit);
         }
 
         return $folders->paginate($limit);
@@ -143,6 +146,8 @@ class FolderController extends Controller
 
         $folder->traverseAllFiles(function($file) use (&$zip) {
             $fullPath = $file->getPath();
+
+            var_dump($fullPath); exit;
 
             if ($file instanceof File) {
                 $zip->addFile(
