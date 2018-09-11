@@ -43,7 +43,7 @@ class FolderController extends Controller
         $limit = $this->pagingLimit($request);
 
         $this->validate($request, [
-            'parent_id' => 'nullable|integer|exists:users,id',
+            'parent_id' => 'nullable|integer|exists:folders,id',
             'owned_by_id' => 'nullable|integer|exists:users,id',
             'created_by_id' => 'nullable|integer|exists:users,id',
         ]);
@@ -60,9 +60,11 @@ class FolderController extends Controller
             }
 
             $folders->where('parent_id', $request->input('parent_id'));
+            $parent = Folder::find($request->input('parent_id'))->load('all_parents');
         } else {
             if ($request->user()->cannot('fetch_all_folders')) {
                 $folders->where('parent_id', $request->user()->folder_id);
+                $parent = Folder::find($request->user()->folder_id)->load('all_parents');
             }
         }
 
@@ -82,7 +84,7 @@ class FolderController extends Controller
             $folders->where('created_by_id', $request->input('created_by_id'));
         }
 
-        return $folders->paginate($limit);
+        return collect(['all_parents' => $parent])->merge($folders->paginate($limit));
     }
 
     /**
@@ -115,7 +117,7 @@ class FolderController extends Controller
             return $folder;
         }
 
-        return $folder->paginate($limit);
+        return $folder->files()->paginate($limit);
     }
 
     /**
@@ -146,8 +148,6 @@ class FolderController extends Controller
 
         $folder->traverseAllFiles(function($file) use (&$zip) {
             $fullPath = $file->getPath();
-
-            var_dump($fullPath); exit;
 
             if ($file instanceof File) {
                 $zip->addFile(
