@@ -84,7 +84,23 @@ class FolderController extends Controller
             $folders->where('created_by_id', $request->input('created_by_id'));
         }
 
-        return collect(['all_parents' => $parent])->merge($folders->paginate($limit));
+        return $folders->paginate($limit);
+    }
+
+    /**
+     * Fetch folder tree.
+     *
+     * @param  \Illuminate\Http\Request $request
+     * @param  \App\Folder $folder
+     * @return \Illuminate\Http\Response
+     */
+    public function fetchTree(Request $request, Folder $folder)
+    {
+        if ($request->user()->cannot('fetch_folders')) {
+            abort(403, 'Unauthorized.');
+        }
+
+        return $folder->load('all_children');
     }
 
     /**
