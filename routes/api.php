@@ -63,6 +63,10 @@ Route::middleware(['auth:api'])->prefix('v1')->group(function() {
     Route::get('/folders/{folder?}', 'FolderController@fetch')
         ->where('folder', '[0-9]+')->name('folders.fetch');
 
+    // Fetch folder with children and files
+    Route::get('/folders/{folder?}/children', 'FolderController@fetchWithChildren')
+        ->where('folder', '[0-9]+')->name('folders.children.fetch');
+
     // Fetch folder tree
     Route::get('/folders/{folder}/tree', 'FolderController@fetchTree')
         ->where('folder', '[0-9]+')->name('folders.tree.fetch');

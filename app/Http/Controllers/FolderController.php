@@ -24,6 +24,30 @@ class FolderController extends Controller
     }
 
     /**
+     * Fetch folder with children.
+     *
+     * @param  \Illuminate\Http\Request $request
+     * @param  \App\Folder $folder
+     * @return \Illuminate\Http\Response
+     */
+    public function fetchWithChildren(Request $request, Folder $folder)
+    {
+        if ($request->user()->cannot('fetch_folders')) {
+            abort(403, 'Unauthorized.');
+        }
+
+        if ($request->user()->doesNotOwn($folder) &&
+            $request->user()->cannot('fetch_all_folders')
+        ) {
+            abort(403, 'Unauthorized.');
+        }
+
+        $folder->load(['children', 'files']);
+
+        return $folder;
+    }
+
+    /**
      * Fetch folders.
      *
      * @param  \Illuminate\Http\Request $request
