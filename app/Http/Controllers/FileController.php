@@ -151,19 +151,19 @@ class FileController extends Controller
 
         $pathInfo = pathinfo($path);
 
-        $file = File::create([
-            'display_filename' => $originalFilename,
-            'basename' => $pathInfo['basename'],
-            'disk' => $disk,
-            'path' => $path,
-            'filename' => $pathInfo['filename'],
-            'extension' => $pathInfo['extension'],
-            'mime_type' => $request->file('file')->getMimeType(),
-            'size' => Storage::disk($disk)->size($path),
-            'parent_id' => $request->input('parent_id'),
-            'owned_by_id' => $request->user()->id,
-            'created_by_id' => $request->user()->id,
-        ]);
+        $file = new File;
+        $file->display_filename = $originalFilename;
+        $file->basename = $pathInfo['basename'];
+        $file->disk = $disk;
+        $file->path = $path;
+        $file->filename = $pathInfo['filename'];
+        $file->extension = $pathInfo['extension'];
+        $file->mime_type = $request->file('file')->getMimeType();
+        $file->size = Storage::disk($disk)->size($path);
+        $file->parent_id = $request->input('parent_id');
+        $file->owned_by_id = $request->user()->id;
+        $file->created_by_id = $request->user()->id;
+        $file->save();
 
         return $file;
     }

@@ -230,13 +230,13 @@ class FolderController extends Controller
             'parent_id' => 'nullable|integer|exists:folders,id'
         ]);
 
-        $folder = Folder::create([
-            'name' => $request->input('name'),
-            'disk' => File::$defaultDisk,
-            'parent_id' => $request->input('parent_id'),
-            'owned_by_id' => $request->user()->id,
-            'created_by_id' => $request->user()->id,
-        ]);
+        $folder = new Folder;
+        $folder->name = $request->input('name');
+        $folder->disk = File::$defaultDisk;
+        $folder->parent_id = $request->input('parent_id');
+        $folder->owned_by_id = $request->user()->id;
+        $folder->created_by_id = $request->user()->id;
+        $folder->save();
 
         return $folder->load('owned_by', 'created_by');
     }
