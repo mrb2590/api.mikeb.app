@@ -36,11 +36,34 @@ class Folder extends Model
     protected $fillable = ['name'];
 
     /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array
+     */
+    protected $appends = ['server'];
+
+    /**
      * The relationships to always load.
      *
      * @var array
      */
     protected $with = ['owned_by', 'created_by'];
+
+    /**
+     * Get the server info.
+     *
+     * @return array   
+     */
+    protected function getServerAttribute()
+    {
+        return [
+            'storage' => [
+                'total' => Server::totalSpace(),
+                'free' => Server::freeSpace(),
+                'used' => Server::usedSpace(),
+            ]
+        ];
+    }
 
     /**
      * Get the parent folder.
@@ -63,7 +86,7 @@ class Folder extends Model
      */
     public function children()
     {
-        return $this->hasMany(Folder::class, 'parent_id', 'id');
+        return $this->hasMany(Folder::class, 'parent_id', 'id')->orderBy('name');
     }
 
     /**
@@ -87,7 +110,7 @@ class Folder extends Model
      */
     public function files()
     {
-        return $this->hasMany(File::class, 'parent_id', 'id');
+        return $this->hasMany(File::class, 'parent_id', 'id')->orderBy('display_filename');
     }
 
     /**

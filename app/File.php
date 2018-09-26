@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Server;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -64,24 +65,6 @@ class File extends Model
     protected $with = ['owned_by', 'created_by'];
 
     /**
-     * Get the size in a readable format.
-     *
-     * @return string   
-     */
-    public function getSizeReadableAttribute()
-    {
-        $decimals = '2';
-        $size = ['B','KB','MB','GB','TB','PB','EB','ZB','YB'];
-
-        $factor = floor((strlen($this->size) - 1) / 3);
-
-        $sizeReadable = sprintf("%.2f", $this->size / pow(1024, $factor));
-        $sizeReadable .= ' '.@$size[$factor];
-
-        return $sizeReadable;
-    }
-
-    /**
      * Get files froma a disk.
      *
      * @param \Illuminate\Database\Eloquent\Builder $query
@@ -91,6 +74,16 @@ class File extends Model
     public function scopeFromDisk($query, $disk)
     {
         return $query->where('disk', $disk);
+    }
+
+    /**
+     * Get the size in a readable format.
+     *
+     * @return string   
+     */
+    protected function getSizeReadableAttribute()
+    {
+        return Server::bytesToReadable($this->size);
     }
 
     /**
